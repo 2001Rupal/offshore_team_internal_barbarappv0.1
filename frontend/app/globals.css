@@ -2,33 +2,197 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   DESIGN TOKENS & PALETTES (OpenAI / Linear inspired)
+   ============================================================ */
 :root {
-  --background: #09090b;
-  --foreground: #f4f4f5;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  
+  /* Dark Mode (Default Obsidian) */
+  --bg-app: #0d0d0f;
+  --bg-sidebar: #09090b;
+  --bg-card: #141417;
+  --bg-card-subtle: #19191d;
+  --bg-input: #121214;
+  --bg-popover: #1f1f23;
+  --border-app: #27272a;
+  --border-subtle: #1f1f23;
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+  --accent: #f59e0b;
+  --accent-hover: #fbbf24;
 }
 
+/* ============================================================
+   LIGHT THEME: Crisp, balanced, harmonious daylight palette
+   No jarring high-contrast blocks — soft zinc & slate neutrals
+   ============================================================ */
+html.theme-light {
+  --bg-app: #f9fafb;
+  --bg-sidebar: #f4f4f5;
+  --bg-card: #ffffff;
+  --bg-card-subtle: #f4f4f5;
+  --bg-input: #ffffff;
+  --bg-popover: #ffffff;
+  --border-app: #e4e4e7;
+  --border-subtle: #f4f4f5;
+  --text-primary: #18181b;
+  --text-secondary: #52525b;
+  --text-muted: #71717a;
+  --accent: #d97706;
+  --accent-hover: #b45309;
+}
+
+html.theme-light body {
+  background-color: #f9fafb !important;
+  color: #18181b !important;
+}
+
+html.theme-light aside {
+  background-color: #f4f4f5 !important;
+  border-right-color: #e4e4e7 !important;
+}
+
+html.theme-light header {
+  background-color: rgba(244, 244, 245, 0.9) !important;
+  border-bottom-color: #e4e4e7 !important;
+}
+
+html.theme-light .bg-zinc-950,
+html.theme-light .bg-zinc-950\/95,
+html.theme-light .bg-zinc-950\/80,
+html.theme-light .bg-zinc-950\/50,
+html.theme-light .bg-zinc-950\/40 {
+  background-color: #f9fafb !important;
+}
+
+html.theme-light .bg-zinc-900,
+html.theme-light .bg-zinc-900\/80,
+html.theme-light .bg-zinc-900\/60,
+html.theme-light .bg-zinc-900\/50,
+html.theme-light .bg-zinc-900\/40,
+html.theme-light .bg-zinc-900\/30 {
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+}
+
+html.theme-light .border-zinc-800,
+html.theme-light .border-zinc-800\/80,
+html.theme-light .border-zinc-800\/60,
+html.theme-light .border-zinc-700,
+html.theme-light .border-zinc-700\/60 {
+  border-color: #e4e4e7 !important;
+}
+
+html.theme-light .divide-zinc-800\/60 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #e4e4e7 !important;
+}
+
+/* Typography in light mode */
+html.theme-light .text-white,
+html.theme-light .text-zinc-100,
+html.theme-light .text-zinc-200 {
+  color: #18181b !important;
+}
+
+html.theme-light .text-zinc-300,
+html.theme-light .text-zinc-400 {
+  color: #52525b !important;
+}
+
+html.theme-light .text-zinc-500 {
+  color: #71717a !important;
+}
+
+/* Form controls in light mode */
+html.theme-light input,
+html.theme-light textarea {
+  background-color: #ffffff !important;
+  border-color: #d4d4d8 !important;
+  color: #18181b !important;
+}
+
+html.theme-light input:focus,
+html.theme-light textarea:focus {
+  border-color: #d97706 !important;
+  box-shadow: 0 0 0 1px #d97706 !important;
+}
+
+html.theme-light input::placeholder,
+html.theme-light textarea::placeholder {
+  color: #a1a1aa !important;
+}
+
+/* Table styling in light mode */
+html.theme-light thead,
+html.theme-light .bg-zinc-950\/40 {
+  background-color: #f4f4f5 !important;
+  color: #52525b !important;
+}
+
+html.theme-light tbody tr:hover {
+  background-color: #f4f4f5 !important;
+}
+
+/* Avatar badge in light mode */
+html.theme-light .bg-zinc-800 {
+  background-color: #e4e4e7 !important;
+  color: #92400e !important;
+}
+
+/* ============================================================
+   MIDNIGHT EMERALD THEME (Deep graphite with crisp emerald accents)
+   ============================================================ */
+html.theme-midnight {
+  --bg-app: #030712;
+  --bg-sidebar: #050a17;
+  --bg-card: rgba(15, 23, 42, 0.6);
+  --bg-popover: #0f172a;
+  --border-app: #1e293b;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --accent: #10b981;
+}
+
+html.theme-midnight body {
+  background-color: #030712 !important;
+}
+
+html.theme-midnight aside {
+  background-color: #050a17 !important;
+  border-color: #1e293b !important;
+}
+
+html.theme-midnight header {
+  background-color: rgba(5, 10, 23, 0.85) !important;
+  border-color: #1e293b !important;
+}
+
+/* Base Body */
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: var(--text-primary);
+  background-color: var(--bg-app);
+  font-family: var(--font-sans);
   min-height: 100vh;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-/* Custom subtle scrollbar */
+/* Subtle scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #18181b;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #3f3f46;
+  background: rgba(113, 113, 122, 0.3);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #52525b;
+  background: rgba(113, 113, 122, 0.5);
 }

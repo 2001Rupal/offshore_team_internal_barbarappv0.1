@@ -4,13 +4,13 @@ import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '../../lib/auth-context';
+import { UserProfileMenu } from '../../components/user-profile-menu';
 import {
   Scissors,
   LayoutDashboard,
   Store,
   Users,
   Sparkles,
-  LogOut,
   ChevronRight,
   ShieldCheck,
   Building2,
@@ -21,7 +21,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, shop, isLoading, logout } = useAuth();
+  const { user, shop, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -36,7 +36,7 @@ export default function DashboardLayout({
       <div className="flex min-h-screen items-center justify-center bg-zinc-950">
         <div className="flex flex-col items-center gap-3">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
-          <p className="text-xs text-zinc-400">Loading session...</p>
+          <p className="text-xs text-zinc-400">Loading studio workspace...</p>
         </div>
       </div>
     );
@@ -44,23 +44,23 @@ export default function DashboardLayout({
 
   const navItems = [
     {
-      name: 'Dashboard',
+      name: 'Overview',
       href: '/dashboard',
       icon: LayoutDashboard,
       exact: true,
     },
     {
-      name: 'My Shop',
+      name: 'Shop Profile',
       href: '/dashboard/shop',
       icon: Store,
     },
     {
-      name: 'Barbers',
+      name: 'Staff & Barbers',
       href: '/dashboard/barbers',
       icon: Users,
     },
     {
-      name: 'Services',
+      name: 'Service Catalog',
       href: '/dashboard/services',
       icon: Sparkles,
     },
@@ -76,31 +76,43 @@ export default function DashboardLayout({
             <Scissors className="h-5 w-5 text-zinc-950" />
           </div>
           <div>
-            <span className="font-bold tracking-tight text-white">
-              Barber Platform
+            <span className="font-bold tracking-tight text-white text-base">
+              Barber Studio
             </span>
-            <span className="ml-1.5 rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-400">
-              Level 1
+            <span className="ml-2 rounded-md bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-400 border border-amber-500/20">
+              PRO
             </span>
           </div>
         </div>
 
-        {/* Current Active Shop Badge */}
+        {/* Current Active Shop Card */}
         <div className="border-b border-zinc-800/60 p-4">
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-3">
-            <div className="flex items-center gap-2 text-xs font-medium text-zinc-400">
-              <Building2 className="h-3.5 w-3.5 text-amber-400" />
-              <span>Active Shop</span>
-            </div>
-            <div className="mt-1 flex items-center justify-between">
-              <p className="truncate text-sm font-semibold text-zinc-100">
-                {shop ? shop.name : 'No Shop Configured'}
-              </p>
+          <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/50 p-3 transition hover:border-zinc-700">
+            <div className="flex items-center justify-between text-xs font-medium text-zinc-400">
+              <div className="flex items-center gap-1.5">
+                <Building2 className="h-3.5 w-3.5 text-amber-400" />
+                <span>Current Shop</span>
+              </div>
               <span
-                className={`h-2 w-2 rounded-full ${
-                  shop && shop.isActive ? 'bg-emerald-400' : 'bg-zinc-600'
+                className={`inline-flex items-center gap-1 text-[11px] ${
+                  shop && shop.isActive ? 'text-emerald-400' : 'text-zinc-500'
                 }`}
-              />
+              >
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${
+                    shop && shop.isActive ? 'bg-emerald-400' : 'bg-zinc-600'
+                  }`}
+                />
+                {shop && shop.isActive ? 'Active' : 'Unconfigured'}
+              </span>
+            </div>
+            <div className="mt-1.5">
+              <p className="truncate text-sm font-semibold text-zinc-100">
+                {shop ? shop.name : 'Setup Required'}
+              </p>
+              <p className="truncate text-[11px] text-zinc-400">
+                {shop ? `${shop.city}, ${shop.country || 'India'}` : 'Click to create shop'}
+              </p>
             </div>
           </div>
         </div>
@@ -120,7 +132,7 @@ export default function DashboardLayout({
                 href={item.href}
                 className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium transition ${
                   isActive
-                    ? 'bg-amber-500/10 text-amber-400 shadow-sm'
+                    ? 'bg-amber-500/10 text-amber-400 font-semibold shadow-sm border border-amber-500/20'
                     : 'text-zinc-400 hover:bg-zinc-900/80 hover:text-zinc-200'
                 }`}
               >
@@ -134,39 +146,31 @@ export default function DashboardLayout({
           })}
         </nav>
 
-        {/* User profile and logout button */}
-        <div className="border-t border-zinc-800/80 p-4">
-          <div className="mb-3 flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-800 text-xs font-bold text-amber-400">
-              {user.name.slice(0, 2).toUpperCase()}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-semibold text-zinc-200">{user.name}</p>
-              <p className="truncate text-[11px] text-zinc-500">{user.email}</p>
-            </div>
-          </div>
-
-          <button
-            onClick={logout}
-            id="btn-logout"
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/60 py-2 text-xs font-medium text-zinc-300 transition hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400"
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            <span>Sign Out</span>
-          </button>
+        {/* Consolidated Profile, Appearance & Signout Menu at bottom */}
+        <div className="border-t border-zinc-800/80 p-3.5">
+          <UserProfileMenu />
         </div>
       </aside>
 
       {/* Main Content Area */}
       <div className="flex flex-1 flex-col pl-64">
         <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-zinc-800/80 bg-zinc-950/80 px-8 backdrop-blur-md">
-          <div className="flex items-center gap-2 text-xs text-zinc-400">
+          <div className="flex items-center gap-2 text-xs font-medium text-zinc-400">
             <ShieldCheck className="h-4 w-4 text-amber-400" />
-            <span>Shop Owner Portal (Level 1 Foundation)</span>
+            <span>Studio Management System</span>
           </div>
 
-          <div className="flex items-center gap-3 text-xs text-zinc-400">
-            <span>Role: <strong className="text-zinc-200">{user.role}</strong></span>
+          <div className="flex items-center gap-2 text-xs text-zinc-400">
+            {shop ? (
+              <span className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/50 px-2.5 py-1 text-zinc-300">
+                <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                <span className="font-medium text-zinc-200">{shop.name}</span>
+                <span className="text-zinc-500">•</span>
+                <span>{shop.city}</span>
+              </span>
+            ) : (
+              <span className="text-amber-400 text-xs font-medium">Shop Setup Incomplete</span>
+            )}
           </div>
         </header>
 

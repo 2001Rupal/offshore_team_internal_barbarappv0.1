@@ -16,6 +16,10 @@ import {
   PlusCircle,
   AlertCircle,
   CheckCircle2,
+  Clock,
+  IndianRupee,
+  Briefcase,
+  Settings,
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -33,74 +37,127 @@ export default function DashboardPage() {
     enabled: !!shop?.id,
   });
 
-  const activeBarbers = barbers.filter((b) => b.isActive).length;
-  const activeServices = services.filter((s) => s.isActive).length;
+  const activeBarbers = barbers.filter((b) => b.isActive);
+  const activeServices = services.filter((s) => s.isActive);
+
+  const avgPrice =
+    activeServices.length > 0
+      ? Math.round(
+          activeServices.reduce((acc, s) => acc + s.price, 0) / activeServices.length,
+        )
+      : 0;
 
   return (
     <div className="space-y-8">
-      {/* Top Banner */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      {/* Top Banner Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-zinc-800/80 pb-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">
-            Welcome back, {user?.name}
-          </h1>
-          <p className="text-sm text-zinc-400">
-            Overview and configuration for your barber shop
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-white">
+              Studio Workspace
+            </h1>
+            <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-400 border border-emerald-500/20">
+              Live
+            </span>
+          </div>
+          <p className="text-sm text-zinc-400 mt-1">
+            Real-time management for <span className="text-zinc-200 font-medium">{shop ? shop.name : 'your shop'}</span>
           </p>
         </div>
 
-        {!shop && (
-          <Link
-            href="/dashboard/shop"
-            id="btn-create-shop-banner"
-            className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-semibold text-zinc-950 shadow-md transition hover:bg-amber-400"
-          >
-            <PlusCircle className="h-4 w-4" />
-            <span>Create Your Shop</span>
-          </Link>
-        )}
+        <div className="flex flex-wrap items-center gap-2.5">
+          {shop ? (
+            <>
+              <Link
+                href="/dashboard/barbers"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900/80 px-3.5 py-2 text-xs font-semibold text-zinc-200 hover:border-zinc-700 hover:bg-zinc-800 transition shadow-sm"
+              >
+                <PlusCircle className="h-3.5 w-3.5 text-amber-400" />
+                <span>Add Barber</span>
+              </Link>
+              <Link
+                href="/dashboard/services"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900/80 px-3.5 py-2 text-xs font-semibold text-zinc-200 hover:border-zinc-700 hover:bg-zinc-800 transition shadow-sm"
+              >
+                <PlusCircle className="h-3.5 w-3.5 text-emerald-400" />
+                <span>Add Service</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('open-shop-profile', { detail: { tab: 'shop' } }));
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500 px-3.5 py-2 text-xs font-semibold text-zinc-950 hover:bg-amber-400 transition shadow-sm"
+              >
+                <Store className="h-3.5 w-3.5" />
+                <span>Shop Profile</span>
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              id="btn-create-shop-banner"
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('open-shop-profile', { detail: { tab: 'shop' } }));
+                }
+              }}
+              className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-zinc-950 shadow-md transition hover:bg-amber-400"
+            >
+              <PlusCircle className="h-4 w-4" />
+              <span>Configure Shop</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Warning if no shop exists */}
       {!shop && (
-        <div className="flex items-start gap-3 rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5 text-amber-300">
-          <AlertCircle className="h-5 w-5 shrink-0 text-amber-400" />
+        <div className="flex items-start gap-3.5 rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5 text-amber-300">
+          <AlertCircle className="h-5 w-5 shrink-0 text-amber-400 mt-0.5" />
           <div className="space-y-1">
             <h2 className="text-sm font-semibold text-amber-200">Shop Setup Required</h2>
-            <p className="text-xs text-amber-300/80">
-              You haven&apos;t created your shop yet. To add barbers and services, you must first initialize your shop profile.
+            <p className="text-xs text-amber-300/80 leading-relaxed">
+              You haven&apos;t created your shop profile yet. Complete your shop information to begin configuring your staff roster and grooming menu.
             </p>
             <div className="pt-2">
-              <Link
-                href="/dashboard/shop"
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('open-shop-profile', { detail: { tab: 'shop' } }));
+                  }
+                }}
                 className="inline-flex items-center text-xs font-semibold text-amber-400 underline-offset-4 hover:underline"
               >
-                Go to Shop Setup &rarr;
-              </Link>
+                Open Shop Setup &rarr;
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Metrics Row */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {/* Shop Card */}
-        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 shadow-lg backdrop-blur-sm">
+      {/* Primary KPI Metrics */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Shop Info Card */}
+        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 shadow-lg backdrop-blur-sm transition hover:border-zinc-700">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-zinc-400">Shop Status</span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-400">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400">
               <Store className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-4">
-            <p className="text-xl font-bold text-white">
-              {shop ? shop.name : 'Not Created'}
+            <p className="text-lg font-bold text-white truncate">
+              {shop ? shop.name : 'Unconfigured'}
             </p>
             <p className="mt-1 flex items-center gap-1.5 text-xs text-zinc-400">
               {shop ? (
                 <>
                   <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-                  <span>{shop.city || 'Configured'} • {shop.isActive ? 'Active' : 'Inactive'}</span>
+                  <span>{shop.city} • Active</span>
                 </>
               ) : (
                 <span>Action required</span>
@@ -108,33 +165,38 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="mt-4 border-t border-zinc-800/60 pt-3">
-            <Link
-              href="/dashboard/shop"
-              className="flex items-center justify-between text-xs font-medium text-amber-400 hover:text-amber-300"
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('open-shop-profile', { detail: { tab: 'shop' } }));
+                }
+              }}
+              className="flex w-full items-center justify-between text-xs font-medium text-amber-400 hover:text-amber-300 transition"
             >
-              <span>{shop ? 'Edit shop profile' : 'Create shop now'}</span>
+              <span>{shop ? 'View profile' : 'Create shop'}</span>
               <ArrowUpRight className="h-3.5 w-3.5" />
-            </Link>
+            </button>
           </div>
         </div>
 
-        {/* Barbers Metric */}
-        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 shadow-lg backdrop-blur-sm">
+        {/* Staff Barbers */}
+        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 shadow-lg backdrop-blur-sm transition hover:border-zinc-700">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-zinc-400">Staff Barbers</span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400">
               <Users className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-4">
             <div className="flex items-baseline gap-2">
               <p className="text-2xl font-bold text-white">{barbers.length}</p>
-              <span className="text-xs text-zinc-400">
-                ({activeBarbers} active)
+              <span className="text-xs text-emerald-400 font-medium">
+                {activeBarbers.length} active
               </span>
             </div>
             <p className="mt-1 text-xs text-zinc-400">
-              Barbers on shop roster
+              Team members on roster
             </p>
           </div>
           <div className="mt-4 border-t border-zinc-800/60 pt-3">
@@ -142,29 +204,29 @@ export default function DashboardPage() {
               href="/dashboard/barbers"
               className="flex items-center justify-between text-xs font-medium text-amber-400 hover:text-amber-300"
             >
-              <span>Manage barbers</span>
+              <span>Manage staff</span>
               <ArrowUpRight className="h-3.5 w-3.5" />
             </Link>
           </div>
         </div>
 
-        {/* Services Metric */}
-        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 shadow-lg backdrop-blur-sm">
+        {/* Grooming Services */}
+        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 shadow-lg backdrop-blur-sm transition hover:border-zinc-700">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-zinc-400">Grooming Services</span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400">
+            <span className="text-xs font-medium text-zinc-400">Catalog Services</span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400">
               <Sparkles className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-4">
             <div className="flex items-baseline gap-2">
               <p className="text-2xl font-bold text-white">{services.length}</p>
-              <span className="text-xs text-zinc-400">
-                ({activeServices} active)
+              <span className="text-xs text-emerald-400 font-medium">
+                {activeServices.length} active
               </span>
             </div>
             <p className="mt-1 text-xs text-zinc-400">
-              Available catalog offerings
+              Grooming treatments
             </p>
           </div>
           <div className="mt-4 border-t border-zinc-800/60 pt-3">
@@ -177,47 +239,155 @@ export default function DashboardPage() {
             </Link>
           </div>
         </div>
+
+        {/* Average Price */}
+        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 shadow-lg backdrop-blur-sm transition hover:border-zinc-700">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-zinc-400">Avg Service Price</span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400">
+              <IndianRupee className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="mt-4">
+            <p className="text-2xl font-bold text-white">₹{avgPrice}</p>
+            <p className="mt-1 text-xs text-zinc-400">
+              Based on active offerings
+            </p>
+          </div>
+          <div className="mt-4 border-t border-zinc-800/60 pt-3">
+            <Link
+              href="/dashboard/services"
+              className="flex items-center justify-between text-xs font-medium text-amber-400 hover:text-amber-300"
+            >
+              <span>View catalog</span>
+              <ArrowUpRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+        </div>
       </div>
 
-      {/* Shop Details Preview */}
-      {shop && (
-        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 shadow-xl">
+      {/* Roster & Services Side-by-Side Panels */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Roster Highlights */}
+        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 shadow-xl backdrop-blur-sm">
           <div className="flex items-center justify-between border-b border-zinc-800/80 pb-4">
-            <div>
-              <h2 className="text-base font-semibold text-zinc-100">{shop.name}</h2>
-              <p className="text-xs text-zinc-400">{shop.description || 'Barber shop'}</p>
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400">
+                <Users className="h-4 w-4" />
+              </div>
+              <div>
+                <h2 className="text-sm font-semibold text-zinc-100">Barbers Roster</h2>
+                <p className="text-xs text-zinc-400">Active shop barbers</p>
+              </div>
             </div>
             <Link
-              href="/dashboard/shop"
-              className="rounded-lg border border-zinc-700 bg-zinc-800/60 px-3 py-1.5 text-xs font-medium text-zinc-200 transition hover:bg-zinc-700"
+              href="/dashboard/barbers"
+              className="text-xs font-medium text-amber-400 hover:text-amber-300 flex items-center gap-1"
             >
-              Edit Details
+              <span>View Roster</span>
+              <ArrowUpRight className="h-3.5 w-3.5" />
             </Link>
           </div>
 
-          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="flex items-start gap-3 text-xs text-zinc-300">
-              <MapPin className="h-4 w-4 shrink-0 text-zinc-500" />
-              <div>
-                <p className="font-medium text-zinc-200">Address</p>
-                <p className="text-zinc-400">
-                  {shop.address}, {shop.city}
-                  {shop.state ? `, ${shop.state}` : ''}
-                  {shop.postalCode ? ` - ${shop.postalCode}` : ''}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 text-xs text-zinc-300">
-              <Phone className="h-4 w-4 shrink-0 text-zinc-500" />
-              <div>
-                <p className="font-medium text-zinc-200">Contact</p>
-                <p className="text-zinc-400">{shop.phone || 'Not specified'}</p>
-              </div>
-            </div>
+          <div className="mt-4 space-y-3">
+            {barbers.length === 0 ? (
+              <p className="text-xs text-zinc-500 text-center py-6">No barbers added yet</p>
+            ) : (
+              barbers.slice(0, 4).map((barber) => (
+                <div
+                  key={barber.id}
+                  className="flex items-center justify-between rounded-xl border border-zinc-800/60 bg-zinc-950/40 p-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-800 text-xs font-bold text-amber-400">
+                      {barber.name.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-zinc-200">{barber.name}</p>
+                      <p className="text-[11px] text-zinc-400">
+                        {barber.experienceYears !== undefined
+                          ? `${barber.experienceYears} yrs experience`
+                          : 'Staff member'}
+                      </p>
+                    </div>
+                  </div>
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                      barber.isActive
+                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                        : 'bg-zinc-800 text-zinc-400'
+                    }`}
+                  >
+                    <span
+                      className={`h-1 w-1 rounded-full ${
+                        barber.isActive ? 'bg-emerald-400' : 'bg-zinc-500'
+                      }`}
+                    />
+                    {barber.isActive ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
         </div>
-      )}
+
+        {/* Services Highlights */}
+        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 shadow-xl backdrop-blur-sm">
+          <div className="flex items-center justify-between border-b border-zinc-800/80 pb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400">
+                <Sparkles className="h-4 w-4" />
+              </div>
+              <div>
+                <h2 className="text-sm font-semibold text-zinc-100">Service Offerings</h2>
+                <p className="text-xs text-zinc-400">Pricing and duration catalog</p>
+              </div>
+            </div>
+            <Link
+              href="/dashboard/services"
+              className="text-xs font-medium text-amber-400 hover:text-amber-300 flex items-center gap-1"
+            >
+              <span>View All</span>
+              <ArrowUpRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {services.length === 0 ? (
+              <p className="text-xs text-zinc-500 text-center py-6">No services added yet</p>
+            ) : (
+              services.slice(0, 4).map((service) => (
+                <div
+                  key={service.id}
+                  className="flex items-center justify-between rounded-xl border border-zinc-800/60 bg-zinc-950/40 p-3"
+                >
+                  <div>
+                    <p className="text-xs font-semibold text-zinc-200">{service.name}</p>
+                    <p className="text-[11px] text-zinc-400 flex items-center gap-1">
+                      <Clock className="h-3 w-3 text-zinc-500" />
+                      <span>{service.durationMinutes} minutes</span>
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xs font-bold text-amber-400">
+                      ₹{service.price}
+                    </span>
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                        service.isActive
+                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                          : 'bg-zinc-800 text-zinc-400'
+                      }`}
+                    >
+                      {service.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

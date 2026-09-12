@@ -3,8 +3,8 @@ import type { Metadata } from 'next';
 import { Providers } from '../components/providers';
 
 export const metadata: Metadata = {
-  title: 'Barber Platform — Owner Portal (Level 1)',
-  description: 'Manage your barber shop, staff roster, and grooming service catalog.',
+  title: 'Barber Studio — Professional Shop & Staff Management',
+  description: 'The all-in-one studio management platform for modern barber shops and stylists.',
 };
 
 export default function RootLayout({

@@ -2,25 +2,15 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../lib/auth-context';
-import { useTheme, Theme } from '../lib/theme-context';
+import { useTheme } from '../lib/theme-context';
 import { AccountModal } from './account-modal';
 import {
-  Sparkles,
   User,
-  Settings,
-  HelpCircle,
   LogOut,
   ChevronRight,
   Store,
   Check,
   Palette,
-  FileText,
-  Info,
-  Bug,
-  Compass,
-  Command,
-  Sun,
-  Moon,
 } from 'lucide-react';
 
 export function UserProfileMenu() {
@@ -28,9 +18,9 @@ export function UserProfileMenu() {
   const { theme, setTheme, availableThemes } = useTheme();
 
   const [isOpen, setIsOpen] = useState(false);
-  const [activeSubmenu, setActiveSubmenu] = useState<'none' | 'appearance' | 'help'>('none');
+  const [activeSubmenu, setActiveSubmenu] = useState<'none' | 'appearance'>('none');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalTab, setModalTab] = useState<'profile' | 'studio' | 'appearance'>('profile');
+  const [modalTab, setModalTab] = useState<'shop' | 'profile' | 'appearance'>('shop');
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -46,6 +36,19 @@ export function UserProfileMenu() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Listen for custom open-shop-profile events from other components
+  useEffect(() => {
+    function handleOpenEvent(e: Event) {
+      const customEvent = e as CustomEvent;
+      const tab = customEvent.detail?.tab || 'shop';
+      setModalTab(tab);
+      setIsModalOpen(true);
+      setIsOpen(false);
+    }
+    window.addEventListener('open-shop-profile', handleOpenEvent);
+    return () => window.removeEventListener('open-shop-profile', handleOpenEvent);
+  }, []);
+
   if (!user) return null;
 
   const initials = user.name
@@ -57,7 +60,7 @@ export function UserProfileMenu() {
         .toUpperCase()
     : 'OW';
 
-  const openModalWithTab = (tab: 'profile' | 'studio' | 'appearance') => {
+  const openModalWithTab = (tab: 'shop' | 'profile' | 'appearance') => {
     setModalTab(tab);
     setIsModalOpen(true);
     setIsOpen(false);
@@ -70,12 +73,12 @@ export function UserProfileMenu() {
           MAIN POPOVER (Positioned directly above user trigger)
          ------------------------------------------------------------- */}
       {isOpen && (
-        <div className="absolute bottom-full left-0 mb-2 w-64 rounded-2xl border border-zinc-800 bg-[#18181b] p-1.5 shadow-2xl z-50 text-xs animate-in fade-in slide-in-from-bottom-2 duration-150">
+        <div className="absolute bottom-full left-0 mb-2 w-64 rounded-2xl border border-zinc-700/80 bg-zinc-900 p-1.5 shadow-2xl z-50 text-xs animate-in fade-in slide-in-from-bottom-2 duration-150">
           {/* Top User Row */}
           <button
             type="button"
             onClick={() => openModalWithTab('profile')}
-            className="flex w-full items-center justify-between rounded-xl px-2.5 py-2 hover:bg-white/10 transition text-left"
+            className="flex w-full items-center justify-between rounded-xl px-2.5 py-2 hover:bg-zinc-800 transition text-left"
           >
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-zinc-700 text-[11px] font-semibold text-zinc-200">
@@ -84,23 +87,27 @@ export function UserProfileMenu() {
               <div className="min-w-0">
                 <p className="truncate font-semibold text-zinc-100">{user.name}</p>
                 <p className="truncate text-[10px] text-zinc-400 capitalize">
-                  {user.role.toLowerCase()}
+                  {user.role === 'OWNER' ? 'Shop Owner' : user.role.toLowerCase()}
                 </p>
               </div>
             </div>
             <ChevronRight className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
           </button>
 
-          <div className="my-1 border-t border-white/10" />
+          <div className="my-1 border-t border-zinc-800" />
 
-          {/* Upgrade plan / Pro item */}
+          {/* Shop Profile item */}
           <button
             type="button"
-            onClick={() => openModalWithTab('studio')}
-            className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-zinc-200 hover:bg-white/10 transition text-left"
+            id="btn-menu-shop-profile"
+            onClick={() => openModalWithTab('shop')}
+            className="flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-zinc-200 hover:bg-zinc-800 hover:text-white transition text-left"
           >
-            <Sparkles className="h-4 w-4 text-amber-400" />
-            <span>Studio Pro Active</span>
+            <div className="flex items-center gap-2.5">
+              <Store className="h-4 w-4 text-amber-400" />
+              <span>Shop Profile</span>
+            </div>
+            <ChevronRight className="h-3.5 w-3.5 text-zinc-400" />
           </button>
 
           {/* Appearance item with Flyout */}
@@ -115,8 +122,8 @@ export function UserProfileMenu() {
               }
               className={`flex w-full items-center justify-between rounded-xl px-2.5 py-2 transition text-left ${
                 activeSubmenu === 'appearance'
-                  ? 'bg-white/10 text-white'
-                  : 'text-zinc-200 hover:bg-white/10'
+                  ? 'bg-zinc-800 text-white font-medium'
+                  : 'text-zinc-200 hover:bg-zinc-800 hover:text-white'
               }`}
             >
               <div className="flex items-center gap-2.5">
@@ -128,8 +135,8 @@ export function UserProfileMenu() {
 
             {/* Appearance Submenu */}
             {activeSubmenu === 'appearance' && (
-              <div className="absolute left-full bottom-0 ml-1.5 w-56 rounded-2xl border border-zinc-800 bg-[#1f1f23] p-1.5 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-100">
-                <div className="px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 border-b border-white/10">
+              <div className="absolute left-full bottom-0 ml-1.5 w-56 rounded-2xl border border-zinc-700/80 bg-zinc-900 p-1.5 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-100">
+                <div className="px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 border-b border-zinc-800">
                   Theme Palette
                 </div>
                 <div className="mt-1 space-y-0.5">
@@ -145,8 +152,8 @@ export function UserProfileMenu() {
                         }}
                         className={`flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-left transition ${
                           isSelected
-                            ? 'bg-white/10 text-white font-medium'
-                            : 'text-zinc-300 hover:bg-white/5 hover:text-white'
+                            ? 'bg-zinc-800 text-white font-medium'
+                            : 'text-zinc-300 hover:bg-zinc-800/60 hover:text-white'
                         }`}
                       >
                         <div className="flex items-center gap-2">
@@ -165,107 +172,7 @@ export function UserProfileMenu() {
             )}
           </div>
 
-          {/* Profile item */}
-          <button
-            type="button"
-            onClick={() => openModalWithTab('profile')}
-            className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-zinc-200 hover:bg-white/10 transition text-left"
-          >
-            <User className="h-4 w-4 text-zinc-400" />
-            <span>Profile</span>
-          </button>
-
-          {/* Settings item */}
-          <button
-            type="button"
-            onClick={() => openModalWithTab('studio')}
-            className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-zinc-200 hover:bg-white/10 transition text-left"
-          >
-            <Settings className="h-4 w-4 text-zinc-400" />
-            <span>Settings</span>
-          </button>
-
-          <div className="my-1 border-t border-white/10" />
-
-          {/* Help item with Flyout (matches screenshot exactly) */}
-          <div
-            className="relative"
-            onMouseEnter={() => setActiveSubmenu('help')}
-          >
-            <button
-              type="button"
-              onClick={() => setActiveSubmenu(activeSubmenu === 'help' ? 'none' : 'help')}
-              className={`flex w-full items-center justify-between rounded-xl px-2.5 py-2 transition text-left ${
-                activeSubmenu === 'help'
-                  ? 'bg-white/10 text-white'
-                  : 'text-zinc-200 hover:bg-white/10'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <HelpCircle className="h-4 w-4 text-zinc-400" />
-                <span>Help</span>
-              </div>
-              <ChevronRight className="h-3.5 w-3.5 text-zinc-400" />
-            </button>
-
-            {/* Help Submenu */}
-            {activeSubmenu === 'help' && (
-              <div className="absolute left-full bottom-0 ml-1.5 w-52 rounded-2xl border border-zinc-800 bg-[#1f1f23] p-1.5 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-100">
-                <a
-                  href="http://localhost:3001/api/docs"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-zinc-300 hover:bg-white/10 hover:text-white transition"
-                >
-                  <Compass className="h-4 w-4 text-zinc-400" />
-                  <span>API Documentation</span>
-                </a>
-                <button
-                  type="button"
-                  onClick={() => openModalWithTab('studio')}
-                  className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-zinc-300 hover:bg-white/10 hover:text-white transition text-left"
-                >
-                  <FileText className="h-4 w-4 text-zinc-400" />
-                  <span>Release notes</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openModalWithTab('profile')}
-                  className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-zinc-300 hover:bg-white/10 hover:text-white transition text-left"
-                >
-                  <Command className="h-4 w-4 text-zinc-400" />
-                  <span>Keyboard shortcuts</span>
-                </button>
-
-                <div className="my-1 border-t border-white/10" />
-
-                <button
-                  type="button"
-                  onClick={() => openModalWithTab('studio')}
-                  className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-zinc-300 hover:bg-white/10 hover:text-white transition text-left"
-                >
-                  <FileText className="h-4 w-4 text-zinc-400" />
-                  <span>Terms of Service</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openModalWithTab('studio')}
-                  className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-zinc-300 hover:bg-white/10 hover:text-white transition text-left"
-                >
-                  <Info className="h-4 w-4 text-zinc-400" />
-                  <span>Privacy Policy</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openModalWithTab('profile')}
-                  className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-zinc-300 hover:bg-white/10 hover:text-white transition text-left"
-                >
-                  <Bug className="h-4 w-4 text-zinc-400" />
-                  <span>Report a bug</span>
-                </button>
-              </div>
-            )}
-          </div>
+          <div className="my-1 border-t border-zinc-800" />
 
           {/* Log out item */}
           <button
@@ -281,7 +188,7 @@ export function UserProfileMenu() {
       )}
 
       {/* -------------------------------------------------------------
-          TRIGGER PILL (Matches bottom row of user screenshot)
+          TRIGGER PILL (Matches bottom row of sidebar)
          ------------------------------------------------------------- */}
       <button
         type="button"
@@ -291,7 +198,7 @@ export function UserProfileMenu() {
           setActiveSubmenu('none');
         }}
         className={`flex w-full items-center justify-between rounded-xl px-2 py-1.5 transition text-left ${
-          isOpen ? 'bg-white/10' : 'hover:bg-white/5'
+          isOpen ? 'bg-zinc-800/80 text-white' : 'hover:bg-zinc-800/50 text-zinc-200'
         }`}
       >
         <div className="flex items-center gap-2.5 min-w-0">
@@ -309,7 +216,7 @@ export function UserProfileMenu() {
         <Store className="h-4 w-4 text-zinc-400 shrink-0 ml-1" />
       </button>
 
-      {/* Settings / Profile Modal */}
+      {/* Settings / Profile Modal (Renders into document.body via Portal) */}
       <AccountModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

@@ -20,7 +20,7 @@ export class ShopsService {
   async create(ownerId: string, dto: CreateShopDto): Promise<ShopDocument> {
     const existing = await this.shopModel.findOne({ ownerId: new Types.ObjectId(ownerId) });
     if (existing) {
-      throw new ConflictException('Owner already has a shop created (Level 1 allows 1 shop per owner)');
+      throw new ConflictException('This account already has a shop configured.');
     }
 
     const created = new this.shopModel({

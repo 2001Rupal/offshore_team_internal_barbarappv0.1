@@ -50,11 +50,6 @@ export default function DashboardLayout({
       exact: true,
     },
     {
-      name: 'Shop Profile',
-      href: '/dashboard/shop',
-      icon: Store,
-    },
-    {
       name: 'Staff & Barbers',
       href: '/dashboard/barbers',
       icon: Users,
@@ -65,6 +60,12 @@ export default function DashboardLayout({
       icon: Sparkles,
     },
   ];
+
+  const handleOpenShopModal = () => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('open-shop-profile', { detail: { tab: 'shop' } }));
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-zinc-950 text-zinc-100">
@@ -79,15 +80,16 @@ export default function DashboardLayout({
             <span className="font-bold tracking-tight text-white text-base">
               Barber Studio
             </span>
-            <span className="ml-2 rounded-md bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-400 border border-amber-500/20">
-              PRO
-            </span>
           </div>
         </div>
 
-        {/* Current Active Shop Card */}
+        {/* Current Active Shop Card (Click to open Shop Profile modal) */}
         <div className="border-b border-zinc-800/60 p-4">
-          <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/50 p-3 transition hover:border-zinc-700">
+          <button
+            type="button"
+            onClick={handleOpenShopModal}
+            className="w-full text-left rounded-xl border border-zinc-800/80 bg-zinc-900/50 p-3 transition hover:border-amber-500/40 hover:bg-zinc-900 group"
+          >
             <div className="flex items-center justify-between text-xs font-medium text-zinc-400">
               <div className="flex items-center gap-1.5">
                 <Building2 className="h-3.5 w-3.5 text-amber-400" />
@@ -106,15 +108,18 @@ export default function DashboardLayout({
                 {shop && shop.isActive ? 'Active' : 'Unconfigured'}
               </span>
             </div>
-            <div className="mt-1.5">
-              <p className="truncate text-sm font-semibold text-zinc-100">
-                {shop ? shop.name : 'Setup Required'}
-              </p>
-              <p className="truncate text-[11px] text-zinc-400">
-                {shop ? `${shop.city}, ${shop.country || 'India'}` : 'Click to create shop'}
-              </p>
+            <div className="mt-1.5 flex items-center justify-between">
+              <div className="min-w-0 pr-1">
+                <p className="truncate text-sm font-semibold text-zinc-100 group-hover:text-amber-400 transition">
+                  {shop ? shop.name : 'Setup Required'}
+                </p>
+                <p className="truncate text-[11px] text-zinc-400">
+                  {shop ? `${shop.city}, ${shop.country || 'India'}` : 'Click to configure shop'}
+                </p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-zinc-500 group-hover:text-amber-400 shrink-0 transition" />
             </div>
-          </div>
+          </button>
         </div>
 
         {/* Navigation Links */}

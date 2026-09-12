@@ -46,9 +46,9 @@ async function bootstrap() {
 
   // Swagger Documentation Setup
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('Barber Booking Platform API — Level 1')
+    .setTitle('Barber Studio REST API')
     .setDescription(
-      'REST API specification for Shop Owner management, Barber roster, and Service catalog (Level 1).',
+      'REST API specification for Studio Owner management, Barber roster, and Service catalog.',
     )
     .setVersion('1.0')
     .addBearerAuth()

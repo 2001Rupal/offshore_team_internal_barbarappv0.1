@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../lib/auth-context';
 import { useTheme } from '../lib/theme-context';
+import { shopService } from '../services/shop.service';
 import {
   X,
   User,
@@ -14,78 +16,187 @@ import {
   Phone,
   MapPin,
   Building2,
+  Save,
+  CheckCircle2,
+  AlertCircle,
+  Sparkles,
 } from 'lucide-react';
 
 interface AccountModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialTab?: 'profile' | 'studio' | 'appearance';
+  initialTab?: 'shop' | 'profile' | 'appearance';
 }
 
 export function AccountModal({
   isOpen,
   onClose,
-  initialTab = 'profile',
+  initialTab = 'shop',
 }: AccountModalProps) {
-  const { user, shop } = useAuth();
+  const { user, shop, refreshShop } = useAuth();
   const { theme, setTheme, availableThemes } = useTheme();
-  const [activeTab, setActiveTab] = useState<'profile' | 'studio' | 'appearance'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'shop' | 'profile' | 'appearance'>(initialTab);
 
-  if (!isOpen || !user) return null;
+  const [mounted, setMounted] = useState(false);
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-md animate-in fade-in duration-150">
-      <div className="w-full max-w-xl rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl">
+  // Shop form state
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [address, setAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [country, setCountry] = useState('India');
+  const [postalCode, setPostalCode] = useState('');
+  const [phone, setPhone] = useState('');
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab, isOpen]);
+
+  useEffect(() => {
+    if (shop) {
+      setName(shop.name || '');
+      setDescription(shop.description || '');
+      setAddress(shop.address || '');
+      setCity(shop.city || '');
+      setState(shop.state || '');
+      setCountry(shop.country || 'India');
+      setPostalCode(shop.postalCode || '');
+      setPhone(shop.phone || '');
+    }
+  }, [shop, isOpen]);
+
+  // Handle escape key
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  const handleSaveShop = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setSuccessMsg(null);
+    setErrorMsg(null);
+
+    try {
+      if (!shop) {
+        await shopService.createShop({
+          name,
+          description: description || undefined,
+          address,
+          city,
+          state: state || undefined,
+          country: country || undefined,
+          postalCode: postalCode || undefined,
+          phone: phone || undefined,
+        });
+        setSuccessMsg('Shop profile created successfully!');
+      } else {
+        await shopService.updateShop(shop.id, {
+          name,
+          description: description || undefined,
+          address,
+          city,
+          state: state || undefined,
+          country: country || undefined,
+          postalCode: postalCode || undefined,
+          phone: phone || undefined,
+        });
+        setSuccessMsg('Shop settings updated successfully!');
+      }
+      await refreshShop();
+      setTimeout(() => setSuccessMsg(null), 3500);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Failed to save shop details');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (!isOpen || !mounted || !user) return null;
+
+  const modalContent = (
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="relative w-full max-w-2xl rounded-2xl border border-zinc-700/80 bg-zinc-950 p-6 sm:p-7 shadow-2xl text-zinc-100 my-auto max-h-[90vh] flex flex-col">
         {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
+        <div className="flex items-start justify-between border-b border-zinc-800 pb-4 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-800 border border-zinc-700/60 font-bold text-amber-400">
-              {user.name.slice(0, 2).toUpperCase()}
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/30 font-bold text-amber-400 text-sm">
+              <Store className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white">{user.name}</h2>
-              <p className="text-xs text-zinc-400">Studio Owner Settings & Preferences</p>
+              <h2 className="text-lg font-bold text-white">
+                {shop ? shop.name : 'Studio Profile & Settings'}
+              </h2>
+              <p className="text-xs text-zinc-400">
+                Manage storefront information, owner account, and visual preferences
+              </p>
             </div>
           </div>
 
           <button
+            type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-900 hover:text-white transition"
+            aria-label="Close modal"
+            className="rounded-xl p-2 text-zinc-400 hover:bg-zinc-900 hover:text-white transition"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-2 border-b border-zinc-800/80 pt-4 pb-2 text-xs font-medium">
+        <div className="flex items-center gap-2 border-b border-zinc-800/80 pt-4 pb-2 text-xs font-medium shrink-0">
           <button
-            onClick={() => setActiveTab('profile')}
+            type="button"
+            onClick={() => setActiveTab('shop')}
             className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition ${
-              activeTab === 'profile'
-                ? 'bg-zinc-800 text-white font-semibold'
-                : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            <User className="h-3.5 w-3.5" />
-            <span>Profile</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('studio')}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition ${
-              activeTab === 'studio'
-                ? 'bg-zinc-800 text-white font-semibold'
-                : 'text-zinc-400 hover:text-white'
+              activeTab === 'shop'
+                ? 'bg-amber-500/15 text-amber-400 font-semibold border border-amber-500/30'
+                : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
             }`}
           >
             <Store className="h-3.5 w-3.5" />
-            <span>Studio Info</span>
+            <span>Shop Profile</span>
           </button>
           <button
+            type="button"
+            onClick={() => setActiveTab('profile')}
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition ${
+              activeTab === 'profile'
+                ? 'bg-amber-500/15 text-amber-400 font-semibold border border-amber-500/30'
+                : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
+            }`}
+          >
+            <User className="h-3.5 w-3.5" />
+            <span>Owner Account</span>
+          </button>
+          <button
+            type="button"
             onClick={() => setActiveTab('appearance')}
             className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition ${
               activeTab === 'appearance'
-                ? 'bg-zinc-800 text-white font-semibold'
-                : 'text-zinc-400 hover:text-white'
+                ? 'bg-amber-500/15 text-amber-400 font-semibold border border-amber-500/30'
+                : 'text-zinc-400 hover:text-white hover:bg-zinc-900'
             }`}
           >
             <Palette className="h-3.5 w-3.5" />
@@ -93,47 +204,198 @@ export function AccountModal({
           </button>
         </div>
 
-        {/* Tab Content */}
-        <div className="py-5">
+        {/* Tab Content (Scrollable) */}
+        <div className="py-4 overflow-y-auto flex-1 pr-1">
+          {/* TAB 1: SHOP PROFILE FORM */}
+          {activeTab === 'shop' && (
+            <form onSubmit={handleSaveShop} className="space-y-4 text-xs">
+              {successMsg && (
+                <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-400">
+                  <CheckCircle2 className="h-4 w-4 shrink-0" />
+                  <span>{successMsg}</span>
+                </div>
+              )}
+
+              {errorMsg && (
+                <div className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-400">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <span>{errorMsg}</span>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-medium text-zinc-300">
+                  Shop / Studio Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. Royal Cuts Studio"
+                  className="mt-1.5 w-full rounded-xl border border-zinc-800 bg-zinc-900/90 px-3.5 py-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-zinc-300">
+                  Shop Headline / Bio
+                </label>
+                <textarea
+                  rows={2}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="e.g. Premier gentlemen's grooming parlor specializing in skin fades and hot towel treatments"
+                  className="mt-1.5 w-full rounded-xl border border-zinc-800 bg-zinc-900/90 px-3.5 py-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-medium text-zinc-300">
+                    Street Address *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="e.g. 104 Main Street, Commercial Arcade"
+                    className="mt-1.5 w-full rounded-xl border border-zinc-800 bg-zinc-900/90 px-3.5 py-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-zinc-300">
+                    City *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    placeholder="e.g. Bhopal"
+                    className="mt-1.5 w-full rounded-xl border border-zinc-800 bg-zinc-900/90 px-3.5 py-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-zinc-300">
+                    State / Province
+                  </label>
+                  <input
+                    type="text"
+                    value={state}
+                    onChange={(e) => setState(e.target.value)}
+                    placeholder="e.g. Madhya Pradesh"
+                    className="mt-1.5 w-full rounded-xl border border-zinc-800 bg-zinc-900/90 px-3.5 py-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-zinc-300">
+                    Country
+                  </label>
+                  <input
+                    type="text"
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    placeholder="e.g. India"
+                    className="mt-1.5 w-full rounded-xl border border-zinc-800 bg-zinc-900/90 px-3.5 py-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-zinc-300">
+                    Postal / PIN Code
+                  </label>
+                  <input
+                    type="text"
+                    value={postalCode}
+                    onChange={(e) => setPostalCode(e.target.value)}
+                    placeholder="e.g. 462001"
+                    className="mt-1.5 w-full rounded-xl border border-zinc-800 bg-zinc-900/90 px-3.5 py-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-medium text-zinc-300">
+                    Shop Contact Phone
+                  </label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="e.g. +91 9999999999"
+                    className="mt-1.5 w-full rounded-xl border border-zinc-800 bg-zinc-900/90 px-3.5 py-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-3">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded-xl px-4 py-2 text-xs font-medium text-zinc-400 hover:bg-zinc-900 hover:text-white transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-xs font-semibold text-zinc-950 shadow-md hover:bg-amber-400 transition disabled:opacity-50"
+                >
+                  <Save className="h-3.5 w-3.5" />
+                  <span>{isSubmitting ? 'Saving changes...' : 'Save Shop Profile'}</span>
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* TAB 2: OWNER PROFILE DETAILS */}
           {activeTab === 'profile' && (
-            <div className="space-y-4 text-xs">
-              <div className="flex items-center justify-between rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-3.5">
+            <div className="space-y-3.5 text-xs">
+              <div className="flex items-center justify-between rounded-xl border border-zinc-800/80 bg-zinc-900/50 p-3.5">
                 <div className="flex items-center gap-3">
-                  <User className="h-4 w-4 text-zinc-400" />
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-800 text-zinc-300 font-semibold text-xs">
+                    {user.name.slice(0, 2).toUpperCase()}
+                  </div>
                   <div>
-                    <span className="text-zinc-400">Account Name</span>
+                    <span className="text-[11px] text-zinc-400">Account Owner</span>
                     <p className="font-semibold text-zinc-100 text-sm">{user.name}</p>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-3.5">
+              <div className="flex items-center justify-between rounded-xl border border-zinc-800/80 bg-zinc-900/50 p-3.5">
                 <div className="flex items-center gap-3">
                   <Mail className="h-4 w-4 text-zinc-400" />
                   <div>
-                    <span className="text-zinc-400">Email Address</span>
-                    <p className="font-semibold text-zinc-100 text-sm">{user.email}</p>
+                    <span className="text-[11px] text-zinc-400">Email Address</span>
+                    <p className="font-semibold text-zinc-100">{user.email}</p>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-3.5">
+              <div className="flex items-center justify-between rounded-xl border border-zinc-800/80 bg-zinc-900/50 p-3.5">
                 <div className="flex items-center gap-3">
-                  <Shield className="h-4 w-4 text-zinc-400" />
+                  <Shield className="h-4 w-4 text-amber-400" />
                   <div>
-                    <span className="text-zinc-400">Platform Role</span>
-                    <p className="font-semibold text-amber-400 text-sm">{user.role}</p>
+                    <span className="text-[11px] text-zinc-400">Platform Role</span>
+                    <p className="font-semibold text-amber-400">
+                      {user.role === 'OWNER' ? 'Shop Owner (Admin)' : user.role}
+                    </p>
                   </div>
                 </div>
               </div>
 
               {user.phone && (
-                <div className="flex items-center justify-between rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-3.5">
+                <div className="flex items-center justify-between rounded-xl border border-zinc-800/80 bg-zinc-900/50 p-3.5">
                   <div className="flex items-center gap-3">
                     <Phone className="h-4 w-4 text-zinc-400" />
                     <div>
-                      <span className="text-zinc-400">Direct Phone</span>
-                      <p className="font-semibold text-zinc-100 text-sm">{user.phone}</p>
+                      <span className="text-[11px] text-zinc-400">Direct Phone</span>
+                      <p className="font-semibold text-zinc-100">{user.phone}</p>
                     </div>
                   </div>
                 </div>
@@ -141,62 +403,18 @@ export function AccountModal({
             </div>
           )}
 
-          {activeTab === 'studio' && (
-            <div className="space-y-4 text-xs">
-              {shop ? (
-                <>
-                  <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-3.5">
-                    <div className="flex items-center gap-3">
-                      <Building2 className="h-4 w-4 text-amber-400" />
-                      <div>
-                        <span className="text-zinc-400">Shop Name</span>
-                        <p className="font-semibold text-zinc-100 text-sm">{shop.name}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-3.5">
-                    <div className="flex items-center gap-3">
-                      <MapPin className="h-4 w-4 text-zinc-400" />
-                      <div>
-                        <span className="text-zinc-400">Address</span>
-                        <p className="font-semibold text-zinc-100">
-                          {shop.address}, {shop.city}
-                          {shop.state ? `, ${shop.state}` : ''}
-                          {shop.postalCode ? ` - ${shop.postalCode}` : ''}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-3.5">
-                    <div className="flex items-center gap-3">
-                      <Phone className="h-4 w-4 text-zinc-400" />
-                      <div>
-                        <span className="text-zinc-400">Contact Phone</span>
-                        <p className="font-semibold text-zinc-100">
-                          {shop.phone || 'Not specified'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <p className="text-zinc-400 py-4 text-center">No shop configured yet.</p>
-              )}
-            </div>
-          )}
-
+          {/* TAB 3: APPEARANCE PALETTES */}
           {activeTab === 'appearance' && (
             <div className="space-y-2.5">
               <p className="text-xs text-zinc-400 mb-2">
-                Choose your preferred interface appearance:
+                Choose your studio workspace theme:
               </p>
               {availableThemes.map((t) => {
                 const isSelected = theme === t.id;
                 return (
                   <button
                     key={t.id}
+                    type="button"
                     onClick={() => setTheme(t.id)}
                     className={`flex w-full items-center justify-between rounded-xl border p-3.5 text-left text-xs transition ${
                       isSelected
@@ -223,15 +441,21 @@ export function AccountModal({
         </div>
 
         {/* Modal Footer */}
-        <div className="flex justify-end border-t border-zinc-800 pt-4">
+        <div className="flex justify-between items-center border-t border-zinc-800 pt-3.5 shrink-0">
+          <p className="text-[11px] text-zinc-500">
+            {shop ? `Connected to ${shop.name} (${shop.city})` : 'Barber Studio Workspace'}
+          </p>
           <button
+            type="button"
             onClick={onClose}
-            className="rounded-xl bg-zinc-800 px-4 py-2 text-xs font-semibold text-zinc-200 hover:bg-zinc-700 transition"
+            className="rounded-xl bg-zinc-800 px-4 py-2 text-xs font-semibold text-zinc-200 hover:bg-zinc-700 hover:text-white transition"
           >
-            Done
+            Close
           </button>
         </div>
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }

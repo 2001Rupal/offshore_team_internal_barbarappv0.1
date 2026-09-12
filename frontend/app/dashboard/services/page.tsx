@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../../lib/auth-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { serviceService, CreateServicePayload, UpdateServicePayload } from '../../../services/service.service';
@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   Clock,
   IndianRupee,
+  Search,
 } from 'lucide-react';
 
 export default function ServicesPage() {
@@ -26,6 +27,10 @@ export default function ServicesPage() {
   const [deactivatingService, setDeactivatingService] = useState<ServiceItem | null>(null);
 
   const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Search & Filter state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
 
   // Form states for Add / Edit
   const [name, setName] = useState('');
@@ -39,6 +44,18 @@ export default function ServicesPage() {
     enabled: !!shop?.id,
   });
 
+  const filteredServices = useMemo(() => {
+    return services.filter((service) => {
+      const matchesSearch =
+        service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (service.description && service.description.toLowerCase().includes(searchQuery.toLowerCase()));
+
+      if (statusFilter === 'ACTIVE') return matchesSearch && service.isActive;
+      if (statusFilter === 'INACTIVE') return matchesSearch && !service.isActive;
+      return matchesSearch;
+    });
+  }, [services, searchQuery, statusFilter]);
+
   const createMutation = useMutation({
     mutationFn: (payload: CreateServicePayload) =>
       serviceService.createService(shop!.id, payload),
@@ -46,7 +63,7 @@ export default function ServicesPage() {
       queryClient.invalidateQueries({ queryKey: ['services', shop?.id] });
       setIsAddModalOpen(false);
       resetForm();
-      setFeedbackMsg({ type: 'success', text: 'Service added to catalog successfully!' });
+      setFeedbackMsg({ type: 'success', text: 'Grooming service added to catalog.' });
     },
     onError: (err: any) => {
       setFeedbackMsg({ type: 'error', text: err.message || 'Failed to add service' });
@@ -60,7 +77,7 @@ export default function ServicesPage() {
       queryClient.invalidateQueries({ queryKey: ['services', shop?.id] });
       setEditingService(null);
       resetForm();
-      setFeedbackMsg({ type: 'success', text: 'Service details updated successfully!' });
+      setFeedbackMsg({ type: 'success', text: 'Service details successfully updated.' });
     },
     onError: (err: any) => {
       setFeedbackMsg({ type: 'error', text: err.message || 'Failed to update service' });
@@ -75,7 +92,7 @@ export default function ServicesPage() {
       setDeactivatingService(null);
       setFeedbackMsg({
         type: 'success',
-        text: `Service ${variables.isActive ? 'activated' : 'deactivated'} successfully!`,
+        text: `Service ${variables.isActive ? 'activated' : 'deactivated'} successfully.`,
       });
     },
     onError: (err: any) => {
@@ -130,10 +147,11 @@ export default function ServicesPage() {
 
   if (!shop) {
     return (
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-8 text-center">
-        <h2 className="text-base font-semibold text-zinc-200">Shop Required</h2>
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-12 text-center">
+        <Sparkles className="mx-auto h-12 w-12 text-zinc-600" />
+        <h2 className="mt-4 text-base font-semibold text-zinc-200">Shop Profile Required</h2>
         <p className="mt-1 text-xs text-zinc-400">
-          Please create your shop first before managing services.
+          Please configure your shop profile before managing grooming services.
         </p>
       </div>
     );
@@ -141,14 +159,19 @@ export default function ServicesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header & Add Action */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      {/* Header & Main Actions */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-zinc-800/80 pb-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">
-            Grooming Services
-          </h1>
-          <p className="text-sm text-zinc-400">
-            Define service catalog, pricing, and treatment durations
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl font-bold tracking-tight text-white">
+              Service Catalog
+            </h1>
+            <span className="rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs font-semibold text-zinc-300">
+              {services.length} Services
+            </span>
+          </div>
+          <p className="text-sm text-zinc-400 mt-1">
+            Configure haircuts, treatments, durations, and pricing in Indian Rupees (₹)
           </p>
         </div>
 
@@ -158,7 +181,7 @@ export default function ServicesPage() {
           className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-semibold text-zinc-950 shadow-md transition hover:bg-amber-400"
         >
           <PlusCircle className="h-4 w-4" />
-          <span>Add Service</span>
+          <span>Add New Service</span>
         </button>
       </div>
 
@@ -184,33 +207,85 @@ export default function ServicesPage() {
         </div>
       )}
 
-      {/* Services Table / List */}
+      {/* Search & Filter Toolbar */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+          <input
+            type="text"
+            placeholder="Search service name or description..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full rounded-xl border border-zinc-800 bg-zinc-900/60 py-2 pl-10 pr-4 text-xs text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
+          />
+        </div>
+
+        {/* Filter Tabs */}
+        <div className="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900/60 p-1 text-xs">
+          <button
+            onClick={() => setStatusFilter('ALL')}
+            className={`rounded-lg px-3 py-1 font-medium transition ${
+              statusFilter === 'ALL'
+                ? 'bg-zinc-800 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            All ({services.length})
+          </button>
+          <button
+            onClick={() => setStatusFilter('ACTIVE')}
+            className={`rounded-lg px-3 py-1 font-medium transition ${
+              statusFilter === 'ACTIVE'
+                ? 'bg-zinc-800 text-emerald-400 shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            Active ({services.filter((s) => s.isActive).length})
+          </button>
+          <button
+            onClick={() => setStatusFilter('INACTIVE')}
+            className={`rounded-lg px-3 py-1 font-medium transition ${
+              statusFilter === 'INACTIVE'
+                ? 'bg-zinc-800 text-zinc-300 shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            Inactive ({services.filter((s) => !s.isActive).length})
+          </button>
+        </div>
+      </div>
+
+      {/* Services Table */}
       <div className="overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/40 shadow-xl backdrop-blur-sm">
         {isLoading ? (
           <div className="flex h-48 items-center justify-center">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
           </div>
-        ) : services.length === 0 ? (
+        ) : filteredServices.length === 0 ? (
           <div className="p-12 text-center">
             <Sparkles className="mx-auto h-10 w-10 text-zinc-600" />
-            <h2 className="mt-3 text-sm font-semibold text-zinc-300">No services added yet</h2>
+            <h2 className="mt-3 text-sm font-semibold text-zinc-300">
+              {searchQuery ? 'No matching services found' : 'No services in catalog yet'}
+            </h2>
             <p className="mt-1 text-xs text-zinc-500">
-              Click &quot;Add Service&quot; to build your shop&apos;s service menu.
+              {searchQuery
+                ? 'Try adjusting your search query.'
+                : 'Click "Add New Service" to start building your pricing menu.'}
             </p>
           </div>
         ) : (
           <table className="w-full text-left text-sm">
             <thead className="border-b border-zinc-800/80 bg-zinc-950/40 text-xs uppercase text-zinc-400">
               <tr>
-                <th className="px-6 py-3.5">Service</th>
-                <th className="px-6 py-3.5">Price</th>
-                <th className="px-6 py-3.5">Duration</th>
+                <th className="px-6 py-3.5">Service Offering</th>
+                <th className="px-6 py-3.5">Price (INR)</th>
+                <th className="px-6 py-3.5">Estimated Duration</th>
                 <th className="px-6 py-3.5">Status</th>
                 <th className="px-6 py-3.5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800/60">
-              {services.map((service) => (
+              {filteredServices.map((service) => (
                 <tr
                   key={service.id}
                   id={`service-row-${service.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
@@ -219,22 +294,24 @@ export default function ServicesPage() {
                   <td className="px-6 py-4 font-medium text-zinc-100">
                     <div>
                       <span className="font-semibold text-white">{service.name}</span>
-                      {service.description && (
-                        <p className="mt-0.5 line-clamp-1 text-xs text-zinc-400">
+                      {service.description ? (
+                        <p className="mt-0.5 line-clamp-1 text-xs text-zinc-400 max-w-sm">
                           {service.description}
                         </p>
+                      ) : (
+                        <p className="text-[11px] text-zinc-500">Standard styling treatment</p>
                       )}
                     </div>
                   </td>
                   <td className="px-6 py-4 font-semibold text-amber-400">
-                    <span className="inline-flex items-center">
+                    <span className="inline-flex items-center text-sm">
                       ₹{service.price}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-zinc-300">
-                    <span className="inline-flex items-center gap-1 text-xs">
+                    <span className="inline-flex items-center gap-1.5 text-xs">
                       <Clock className="h-3.5 w-3.5 text-zinc-500" />
-                      <span>{service.durationMinutes} min</span>
+                      <span>{service.durationMinutes} minutes</span>
                     </span>
                   </td>
                   <td className="px-6 py-4">
@@ -258,7 +335,7 @@ export default function ServicesPage() {
                       <button
                         onClick={() => openEditModal(service)}
                         title="Edit Service"
-                        className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-1.5 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
+                        className="rounded-xl border border-zinc-800 bg-zinc-900/80 p-2 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200 transition shadow-sm"
                       >
                         <Edit2 className="h-3.5 w-3.5" />
                       </button>
@@ -266,9 +343,9 @@ export default function ServicesPage() {
                       <button
                         onClick={() => setDeactivatingService(service)}
                         title={service.isActive ? 'Deactivate Service' : 'Reactivate Service'}
-                        className={`rounded-lg border p-1.5 transition ${
+                        className={`rounded-xl border p-2 transition shadow-sm ${
                           service.isActive
-                            ? 'border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:border-amber-500/30 hover:text-amber-400'
+                            ? 'border-zinc-800 bg-zinc-900/80 text-zinc-400 hover:border-amber-500/30 hover:text-amber-400'
                             : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
                         }`}
                       >
@@ -285,10 +362,13 @@ export default function ServicesPage() {
 
       {/* Add Service Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <h2 className="text-base font-semibold text-white">Add Service</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md">
+          <div className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3.5">
+              <div>
+                <h2 className="text-base font-semibold text-white">Add Grooming Service</h2>
+                <p className="text-xs text-zinc-400 mt-0.5">Add a new treatment to your pricing catalog</p>
+              </div>
               <button
                 onClick={() => setIsAddModalOpen(false)}
                 className="text-zinc-400 hover:text-zinc-200"
@@ -297,7 +377,7 @@ export default function ServicesPage() {
               </button>
             </div>
 
-            <form onSubmit={handleAddSubmit} className="mt-4 space-y-3">
+            <form onSubmit={handleAddSubmit} className="mt-4 space-y-3.5">
               <div>
                 <label className="block text-xs font-medium text-zinc-300">Service Name *</label>
                 <input
@@ -306,8 +386,8 @@ export default function ServicesPage() {
                   id="add-service-name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Haircut"
-                  className="mt-1 w-full rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
+                  placeholder="e.g. Skin Fade Haircut"
+                  className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-900/80 px-3.5 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
                 />
               </div>
 
@@ -318,8 +398,8 @@ export default function ServicesPage() {
                   id="add-service-description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="e.g. Classic men's haircut with wash and styling"
-                  className="mt-1 w-full rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
+                  placeholder="e.g. Precision skin fade with razor edging and hot towel wash"
+                  className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-900/80 px-3.5 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
                 />
               </div>
 
@@ -338,7 +418,7 @@ export default function ServicesPage() {
                       setPrice(e.target.value === '' ? '' : Number(e.target.value))
                     }
                     placeholder="250"
-                    className="mt-1 w-full rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
+                    className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-900/80 px-3.5 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
                   />
                 </div>
 
@@ -356,16 +436,16 @@ export default function ServicesPage() {
                       setDurationMinutes(e.target.value === '' ? '' : Number(e.target.value))
                     }
                     placeholder="30"
-                    className="mt-1 w-full rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
+                    className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-900/80 px-3.5 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
                   />
                 </div>
               </div>
 
-              <div className="mt-5 flex justify-end gap-2 pt-3">
+              <div className="mt-6 flex justify-end gap-2.5 pt-3 border-t border-zinc-800/80">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="rounded-lg border border-zinc-800 px-4 py-2 text-xs font-medium text-zinc-400 hover:bg-zinc-800"
+                  className="rounded-xl border border-zinc-800 px-4 py-2 text-xs font-medium text-zinc-400 hover:bg-zinc-900 transition"
                 >
                   Cancel
                 </button>
@@ -373,9 +453,9 @@ export default function ServicesPage() {
                   type="submit"
                   disabled={createMutation.isPending}
                   id="btn-confirm-add-service"
-                  className="rounded-lg bg-amber-500 px-4 py-2 text-xs font-semibold text-zinc-950 hover:bg-amber-400 disabled:opacity-50"
+                  className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-semibold text-zinc-950 hover:bg-amber-400 transition disabled:opacity-50"
                 >
-                  {createMutation.isPending ? 'Adding...' : 'Add Service'}
+                  {createMutation.isPending ? 'Saving...' : 'Add Service'}
                 </button>
               </div>
             </form>
@@ -385,10 +465,13 @@ export default function ServicesPage() {
 
       {/* Edit Service Modal */}
       {editingService && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <h2 className="text-base font-semibold text-white">Edit Service</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md">
+          <div className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3.5">
+              <div>
+                <h2 className="text-base font-semibold text-white">Edit Service</h2>
+                <p className="text-xs text-zinc-400 mt-0.5">Modify pricing or service parameters</p>
+              </div>
               <button
                 onClick={() => setEditingService(null)}
                 className="text-zinc-400 hover:text-zinc-200"
@@ -397,7 +480,7 @@ export default function ServicesPage() {
               </button>
             </div>
 
-            <form onSubmit={handleEditSubmit} className="mt-4 space-y-3">
+            <form onSubmit={handleEditSubmit} className="mt-4 space-y-3.5">
               <div>
                 <label className="block text-xs font-medium text-zinc-300">Service Name *</label>
                 <input
@@ -406,7 +489,7 @@ export default function ServicesPage() {
                   id="edit-service-name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:border-amber-500 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-900/80 px-3.5 py-2 text-sm text-zinc-100 focus:border-amber-500 focus:outline-none"
                 />
               </div>
 
@@ -417,7 +500,7 @@ export default function ServicesPage() {
                   id="edit-service-description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:border-amber-500 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-900/80 px-3.5 py-2 text-sm text-zinc-100 focus:border-amber-500 focus:outline-none"
                 />
               </div>
 
@@ -435,7 +518,7 @@ export default function ServicesPage() {
                     onChange={(e) =>
                       setPrice(e.target.value === '' ? '' : Number(e.target.value))
                     }
-                    className="mt-1 w-full rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:border-amber-500 focus:outline-none"
+                    className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-900/80 px-3.5 py-2 text-sm text-zinc-100 focus:border-amber-500 focus:outline-none"
                   />
                 </div>
 
@@ -452,16 +535,16 @@ export default function ServicesPage() {
                     onChange={(e) =>
                       setDurationMinutes(e.target.value === '' ? '' : Number(e.target.value))
                     }
-                    className="mt-1 w-full rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:border-amber-500 focus:outline-none"
+                    className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-900/80 px-3.5 py-2 text-sm text-zinc-100 focus:border-amber-500 focus:outline-none"
                   />
                 </div>
               </div>
 
-              <div className="mt-5 flex justify-end gap-2 pt-3">
+              <div className="mt-6 flex justify-end gap-2.5 pt-3 border-t border-zinc-800/80">
                 <button
                   type="button"
                   onClick={() => setEditingService(null)}
-                  className="rounded-lg border border-zinc-800 px-4 py-2 text-xs font-medium text-zinc-400 hover:bg-zinc-800"
+                  className="rounded-xl border border-zinc-800 px-4 py-2 text-xs font-medium text-zinc-400 hover:bg-zinc-900 transition"
                 >
                   Cancel
                 </button>
@@ -469,7 +552,7 @@ export default function ServicesPage() {
                   type="submit"
                   disabled={updateMutation.isPending}
                   id="btn-confirm-edit-service"
-                  className="rounded-lg bg-amber-500 px-4 py-2 text-xs font-semibold text-zinc-950 hover:bg-amber-400 disabled:opacity-50"
+                  className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-semibold text-zinc-950 hover:bg-amber-400 transition disabled:opacity-50"
                 >
                   {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
                 </button>
@@ -481,24 +564,24 @@ export default function ServicesPage() {
 
       {/* Confirmation Modal for Toggle Status */}
       {deactivatingService && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md">
+          <div className="w-full max-w-sm rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl">
             <h2 className="text-base font-semibold text-white">
               {deactivatingService.isActive ? 'Deactivate Service' : 'Reactivate Service'}
             </h2>
-            <p className="mt-2 text-xs text-zinc-400">
+            <p className="mt-2 text-xs text-zinc-400 leading-relaxed">
               Are you sure you want to{' '}
-              {deactivatingService.isActive ? 'deactivate' : 'reactivate'}{' '}
+              {deactivatingService.isActive ? 'temporarily deactivate' : 'reactivate'}{' '}
               <strong className="text-zinc-200">{deactivatingService.name}</strong>?
               {deactivatingService.isActive &&
-                ' The service record will be preserved for appointment and transaction continuity.'}
+                ' The service item will remain preserved in database history.'}
             </p>
 
-            <div className="mt-6 flex justify-end gap-2">
+            <div className="mt-6 flex justify-end gap-2.5">
               <button
                 type="button"
                 onClick={() => setDeactivatingService(null)}
-                className="rounded-lg border border-zinc-800 px-4 py-2 text-xs font-medium text-zinc-400 hover:bg-zinc-800"
+                className="rounded-xl border border-zinc-800 px-4 py-2 text-xs font-medium text-zinc-400 hover:bg-zinc-900 transition"
               >
                 Cancel
               </button>
@@ -512,7 +595,7 @@ export default function ServicesPage() {
                   })
                 }
                 disabled={statusMutation.isPending}
-                className={`rounded-lg px-4 py-2 text-xs font-semibold text-zinc-950 ${
+                className={`rounded-xl px-4 py-2 text-xs font-semibold text-zinc-950 transition ${
                   deactivatingService.isActive
                     ? 'bg-amber-500 hover:bg-amber-400'
                     : 'bg-emerald-500 hover:bg-emerald-400'
@@ -521,8 +604,8 @@ export default function ServicesPage() {
                 {statusMutation.isPending
                   ? 'Updating...'
                   : deactivatingService.isActive
-                  ? 'Deactivate'
-                  : 'Reactivate'}
+                  ? 'Confirm Deactivation'
+                  : 'Confirm Activation'}
               </button>
             </div>
           </div>

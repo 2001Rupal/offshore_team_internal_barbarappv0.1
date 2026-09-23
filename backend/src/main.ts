@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger } from '@nestjs/common';
+import { ValidationPipe, Logger, RequestMethod } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
@@ -45,8 +45,13 @@ async function bootstrap() {
     ],
   });
 
-  // Global Prefix
-  app.setGlobalPrefix('api/v1');
+  // Global Prefix (excluding root '/' so the health endpoint works at root)
+  app.setGlobalPrefix('api/v1', {
+    exclude: [
+      { path: '', method: RequestMethod.GET },
+      { path: 'health', method: RequestMethod.GET },
+    ],
+  });
 
   // Global Validation
   app.useGlobalPipes(

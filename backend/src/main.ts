@@ -26,7 +26,10 @@ async function bootstrap() {
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
       const isAllowed =
+        corsOrigin === '*' ||
         corsOrigin.includes(origin) ||
+        origin.endsWith('.vercel.app') ||
+        origin.includes('vercel.app') ||
         origin.startsWith('http://localhost') ||
         origin.startsWith('http://127.0.0.1') ||
         origin.startsWith('http://10.') ||

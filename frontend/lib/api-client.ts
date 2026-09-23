@@ -1,13 +1,18 @@
 const getApiUrl = () => {
-  if (typeof window !== 'undefined') {
-    // If accessed from a mobile phone or another device on the network (not localhost),
-    // automatically target that same device IP on port 3001
-    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-      return `${window.location.protocol}//${window.location.hostname}:3001/api/v1`;
-    }
-  }
   if (process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL;
+  }
+  if (typeof window !== 'undefined') {
+    // If accessed from a mobile phone on the local network (192.168.x, 10.x, 172.x),
+    // target that same local IP on port 3001
+    const host = window.location.hostname;
+    const isLanIp =
+      host.startsWith('192.168.') ||
+      host.startsWith('10.') ||
+      host.startsWith('172.');
+    if (isLanIp) {
+      return `${window.location.protocol}//${host}:3001/api/v1`;
+    }
   }
   return 'http://localhost:3001/api/v1';
 };

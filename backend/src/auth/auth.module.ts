@@ -7,9 +7,15 @@ import { AuthController } from './auth.controller';
 import { UsersModule } from '../users/users.module';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
+import { MongooseModule } from '@nestjs/mongoose';
+import { Otp, OtpSchema } from './schemas/otp.schema';
+import { AppOtpProvider } from './providers/app-otp.provider';
+import { OTP_PROVIDER } from './providers/otp-provider.interface';
+
 @Module({
   imports: [
     UsersModule,
+    MongooseModule.forFeature([{ name: Otp.name, schema: OtpSchema }]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -22,8 +28,16 @@ import { JwtStrategy } from './strategies/jwt.strategy';
       }),
     }),
   ],
-  providers: [AuthService, JwtStrategy],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    {
+      provide: OTP_PROVIDER,
+      useClass: AppOtpProvider,
+    },
+    AppOtpProvider,
+  ],
   controllers: [AuthController],
-  exports: [AuthService, JwtModule, PassportModule],
+  exports: [AuthService, JwtModule, PassportModule, OTP_PROVIDER],
 })
 export class AuthModule {}

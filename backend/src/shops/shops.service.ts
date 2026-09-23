@@ -44,6 +44,14 @@ export class ShopsService {
     return shop;
   }
 
+  async findSingleActiveShop(): Promise<ShopDocument> {
+    const shop = await this.shopModel.findOne({ isActive: true }).exec();
+    if (!shop) {
+      throw new NotFoundException('No active shop found');
+    }
+    return shop;
+  }
+
   async findById(shopId: string, ownerId: string): Promise<ShopDocument> {
     if (!isValidObjectId(shopId)) {
       throw new BadRequestException('Invalid shop ID format');

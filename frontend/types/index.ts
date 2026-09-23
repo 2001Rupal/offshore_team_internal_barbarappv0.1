@@ -4,6 +4,8 @@ export interface User {
   email: string;
   role: 'OWNER' | 'BARBER' | 'CUSTOMER';
   phone?: string;
+  age?: number;
+  gender?: string;
 }
 
 export interface Shop {
@@ -17,6 +19,7 @@ export interface Shop {
   country?: string;
   postalCode?: string;
   phone?: string;
+  timezone?: string;
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -42,6 +45,7 @@ export interface ServiceItem {
   description?: string;
   price: number;
   durationMinutes: number;
+  bufferTime?: number;
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -54,3 +58,6 @@ export interface ApiError {
   timestamp?: string;
   path?: string;
 }
+
+export * from './barber-service';
+export * from './availability';

@@ -1,46 +1,173 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../../lib/auth-context';
 import { ThemeToggle } from '../../components/theme-toggle';
-import { Scissors, AlertCircle, Lock, Mail, User, Phone, ArrowRight } from 'lucide-react';
+import {
+  Scissors,
+  AlertCircle,
+  Lock,
+  Mail,
+  Phone,
+  ArrowRight,
+  CheckCircle2,
+  ShieldCheck,
+  RefreshCw,
+  User as UserIcon,
+  Calendar,
+  Sparkles,
+} from 'lucide-react';
 
-export default function RegisterPage() {
-  const { register } = useAuth();
+function RegisterForm() {
+  const searchParams = useSearchParams();
+  const initialRole = searchParams.get('role') === 'OWNER' ? 'OWNER' : 'CUSTOMER';
+
+  const { register, requestOtp, verifyOtp, user, isLoading } = useAuth();
   const router = useRouter();
 
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [role, setRole] = useState<'CUSTOMER' | 'OWNER'>(initialRole);
+
+  // Customer Registration State
+  const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [customerAge, setCustomerAge] = useState('');
+  const [customerGender, setCustomerGender] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+
+  // Owner Registration State
+  const [ownerName, setOwnerName] = useState('');
+  const [ownerEmail, setOwnerEmail] = useState('');
+  const [ownerPhone, setOwnerPhone] = useState('');
+  const [ownerPassword, setOwnerPassword] = useState('');
+  const [ownerConfirmPassword, setOwnerConfirmPassword] = useState('');
+
+  // UI State
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [countdown]);
+
+  useEffect(() => {
+    if (!isLoading && user) {
+      if (user.role === 'CUSTOMER') {
+        router.push('/customer/profile');
+      } else {
+        router.push('/dashboard');
+      }
+    }
+  }, [user, isLoading, router]);
+
+  // Request Customer Registration OTP (Email OTP linked to phone)
+  const handleRequestCustomerOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
+    setSuccessMsg(null);
 
-    if (password.length < 8) {
+    if (!customerName || customerName.trim().length < 2) {
+      setErrorMsg('Please enter your full name.');
+      return;
+    }
+
+    const cleanPhone = customerPhone.replace(/\D/g, '');
+    if (cleanPhone.length < 10) {
+      setErrorMsg('Please enter a valid 10-digit mobile number.');
+      return;
+    }
+
+    if (!customerEmail || !customerEmail.includes('@')) {
+      setErrorMsg('Please enter a valid email address to receive your verification code.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await requestOtp({
+        name: customerName.trim(),
+        phone: cleanPhone,
+        email: customerEmail.trim().toLowerCase(),
+        age: customerAge ? parseInt(customerAge, 10) : undefined,
+        gender: customerGender || undefined,
+      });
+
+      setOtpSent(true);
+      setCountdown(60);
+      setSuccessMsg(res.message || `Verification code sent to your email (${customerEmail})!`);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Failed to dispatch verification code. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Verify Customer OTP and Complete Registration
+  const handleVerifyCustomerOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    setSuccessMsg(null);
+
+    if (!otpCode || otpCode.trim().length < 4) {
+      setErrorMsg('Please enter the 6-digit verification code.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const cleanPhone = customerPhone.replace(/\D/g, '');
+      await verifyOtp({
+        name: customerName.trim(),
+        phone: cleanPhone,
+        email: customerEmail.trim().toLowerCase(),
+        code: otpCode.trim(),
+        age: customerAge ? parseInt(customerAge, 10) : undefined,
+        gender: customerGender || undefined,
+      });
+
+      router.push('/customer/profile');
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Invalid or expired verification code.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Owner Registration with Password
+  const handleOwnerRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    setSuccessMsg(null);
+
+    if (ownerPassword.length < 8) {
       setErrorMsg('Password must be at least 8 characters long.');
       return;
     }
 
-    if (password !== confirmPassword) {
+    if (ownerPassword !== ownerConfirmPassword) {
       setErrorMsg('Passwords do not match.');
       return;
     }
 
     setSubmitting(true);
     try {
-      await register({
-        name,
-        email,
-        password,
-        phone: phone || undefined,
-      });
+      await register(
+        {
+          name: ownerName,
+          email: ownerEmail,
+          password: ownerPassword,
+          phone: ownerPhone || undefined,
+        },
+        'OWNER',
+      );
     } catch (err: any) {
       setErrorMsg(err.message || 'Registration failed. Please try again.');
     } finally {
@@ -49,148 +176,398 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-zinc-950 p-4 transition-colors">
-      {/* Top right theme toggle */}
+    <div className="min-h-screen flex items-center justify-center bg-theme-page text-theme-main p-4 transition-colors relative">
       <div className="absolute top-6 right-6 z-20">
         <ThemeToggle />
       </div>
 
       <div className="w-full max-w-md">
         {/* Brand Header */}
-        <div className="mb-6 text-center">
-          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-amber-700 shadow-xl shadow-amber-500/20">
-            <Scissors className="h-7 w-7 text-zinc-950" />
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">
-            Barber Studio
+        <div className="mb-8 text-center">
+          <Link href="/" className="inline-flex items-center gap-2 group mb-3">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-700 shadow-xl shadow-amber-500/25 group-hover:scale-105 transition-transform">
+              <Scissors className="h-7 w-7 text-zinc-950" />
+            </div>
+          </Link>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-theme-main">
+            Local&apos;s Cut
           </h1>
-          <p className="mt-1 text-sm text-zinc-400">
-            Create Your Owner Account
+          <p className="mt-1 text-xs sm:text-sm text-theme-secondary">
+            {role === 'CUSTOMER' ? 'Customer Quick Registration' : 'Register New Studio Owner'}
           </p>
         </div>
 
-        {/* Register Card */}
-        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-8 shadow-2xl backdrop-blur-xl">
+        {/* Card */}
+        <div className="theme-card rounded-2xl p-6 sm:p-8 backdrop-blur-xl border border-theme shadow-2xl">
+          {/* Main Role Switcher */}
+          <div className="mb-6 grid grid-cols-2 gap-1 rounded-xl bg-theme-surface-elevated p-1 border border-theme">
+            <button
+              type="button"
+              onClick={() => {
+                setRole('CUSTOMER');
+                setErrorMsg(null);
+                setSuccessMsg(null);
+              }}
+              className={`rounded-lg py-2 text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                role === 'CUSTOMER'
+                  ? 'accent-bg text-zinc-950 font-bold shadow-md'
+                  : 'text-theme-secondary hover:text-theme-main'
+              }`}
+            >
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Customer
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setRole('OWNER');
+                setErrorMsg(null);
+                setSuccessMsg(null);
+              }}
+              className={`rounded-lg py-2 text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                role === 'OWNER'
+                  ? 'accent-bg text-zinc-950 font-bold shadow-md'
+                  : 'text-theme-secondary hover:text-theme-main'
+              }`}
+            >
+              <Lock className="h-3.5 w-3.5" />
+              Studio Owner
+            </button>
+          </div>
+
           {errorMsg && (
-            <div className="mb-5 flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3.5 text-xs text-red-400">
-              <AlertCircle className="h-4 w-4 shrink-0" />
+            <div className="mb-5 flex items-start gap-2.5 rounded-xl border border-red-500/20 bg-red-500/10 p-3.5 text-xs text-red-500">
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
               <span>{errorMsg}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-medium text-zinc-300">
-                Full Name
-              </label>
-              <div className="relative mt-1">
-                <User className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
-                <input
-                  type="text"
-                  required
-                  id="register-name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Rahul Sharma"
-                  className="w-full rounded-xl border border-zinc-800 bg-zinc-950/80 py-2.5 pl-10 pr-3.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
-                />
-              </div>
+          {successMsg && (
+            <div className="mb-5 flex items-start gap-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3.5 text-xs text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
+              <span>{successMsg}</span>
             </div>
+          )}
 
-            <div>
-              <label className="block text-xs font-medium text-zinc-300">
-                Email Address
-              </label>
-              <div className="relative mt-1">
-                <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
-                <input
-                  type="email"
-                  required
-                  id="register-email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="rahul@example.com"
-                  className="w-full rounded-xl border border-zinc-800 bg-zinc-950/80 py-2.5 pl-10 pr-3.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
-                />
-              </div>
+          {/* CUSTOMER REGISTRATION */}
+          {role === 'CUSTOMER' ? (
+            <div className="space-y-5">
+              {!otpSent ? (
+                <form onSubmit={handleRequestCustomerOtp} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1.5">
+                      Full Name *
+                    </label>
+                    <div className="relative">
+                      <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-theme-muted" />
+                      <input
+                        type="text"
+                        required
+                        id="customer-reg-name"
+                        value={customerName}
+                        onChange={(e) => setCustomerName(e.target.value)}
+                        placeholder="Rahul Sharma"
+                        className="theme-input w-full py-2.5 pl-10 pr-3.5 text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Phone & Email */}
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1.5">
+                        Mobile Phone Number *
+                      </label>
+                      <div className="relative">
+                        <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-theme-muted" />
+                        <input
+                          type="tel"
+                          required
+                          id="customer-reg-phone"
+                          value={customerPhone}
+                          onChange={(e) => setCustomerPhone(e.target.value)}
+                          placeholder="9876543210 (10 digits)"
+                          className="theme-input w-full py-2.5 pl-10 pr-3.5 text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1">
+                        Email Address *
+                      </label>
+                      <p className="text-[11px] text-theme-secondary mb-1.5">
+                        Your 6-digit verification code will be sent to this email.
+                      </p>
+                      <div className="relative">
+                        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-theme-muted" />
+                        <input
+                          type="email"
+                          required
+                          id="customer-reg-email"
+                          value={customerEmail}
+                          onChange={(e) => setCustomerEmail(e.target.value)}
+                          placeholder="rahul@example.com"
+                          className="theme-input w-full py-2.5 pl-10 pr-3.5 text-sm"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Age & Gender */}
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1.5">
+                        Age (Optional)
+                      </label>
+                      <div className="relative">
+                        <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-theme-muted" />
+                        <input
+                          type="number"
+                          id="customer-reg-age"
+                          min={5}
+                          max={120}
+                          value={customerAge}
+                          onChange={(e) => setCustomerAge(e.target.value)}
+                          placeholder="e.g. 25"
+                          className="theme-input w-full py-2.5 pl-10 pr-3.5 text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1.5">
+                        Gender (Optional)
+                      </label>
+                      <select
+                        id="customer-reg-gender"
+                        value={customerGender}
+                        onChange={(e) => setCustomerGender(e.target.value)}
+                        className="theme-input w-full py-2.5 px-3 text-sm cursor-pointer"
+                      >
+                        <option value="">Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Non-Binary">Non-Binary</option>
+                        <option value="Prefer not to say">Prefer not to say</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    id="btn-customer-reg-request-otp"
+                    className="theme-btn-primary w-full py-3 text-sm font-bold shadow-md mt-2 flex items-center justify-center gap-2"
+                  >
+                    {submitting ? 'Sending code...' : 'Send Email Verification Code'}
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleVerifyCustomerOtp} className="space-y-4">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-theme-secondary">
+                      Verification code sent to:{' '}
+                      <strong className="text-theme-main">{customerEmail}</strong>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOtpSent(false);
+                        setOtpCode('');
+                        setErrorMsg(null);
+                        setSuccessMsg(null);
+                      }}
+                      className="accent-color hover:underline font-semibold text-[11px]"
+                    >
+                      Change Details
+                    </button>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1.5">
+                      Enter 6-Digit Verification Code
+                    </label>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      required
+                      autoFocus
+                      id="customer-reg-otp-input"
+                      value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value)}
+                      placeholder="• • • • • •"
+                      className="theme-input w-full text-center text-xl font-mono tracking-widest py-3 font-bold"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    id="btn-customer-reg-verify-otp"
+                    className="theme-btn-primary w-full py-3 text-sm font-bold shadow-md flex items-center justify-center gap-2"
+                  >
+                    {submitting ? 'Verifying...' : 'Verify Code & Complete Registration'}
+                    <CheckCircle2 className="h-4 w-4" />
+                  </button>
+
+                  <div className="text-center pt-2">
+                    {countdown > 0 ? (
+                      <span className="text-xs text-theme-muted">
+                        Resend code in <strong className="text-theme-main font-mono">{countdown}s</strong>
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleRequestCustomerOtp}
+                        disabled={submitting}
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold accent-color hover:underline"
+                      >
+                        <RefreshCw className="h-3 w-3" />
+                        <span>Resend Verification Code</span>
+                      </button>
+                    )}
+                  </div>
+                </form>
+              )}
             </div>
-
-            <div>
-              <label className="block text-xs font-medium text-zinc-300">
-                Direct Phone (Optional)
-              </label>
-              <div className="relative mt-1">
-                <Phone className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
-                <input
-                  type="tel"
-                  id="register-phone"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+91 9999999999"
-                  className="w-full rounded-xl border border-zinc-800 bg-zinc-950/80 py-2.5 pl-10 pr-3.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
-                />
+          ) : (
+            /* OWNER REGISTRATION */
+            <form onSubmit={handleOwnerRegister} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1.5">
+                  Studio Owner Name *
+                </label>
+                <div className="relative">
+                  <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-theme-muted" />
+                  <input
+                    type="text"
+                    required
+                    id="owner-reg-name"
+                    value={ownerName}
+                    onChange={(e) => setOwnerName(e.target.value)}
+                    placeholder="e.g. Vikram Singh"
+                    className="theme-input w-full py-2.5 pl-10 pr-3.5 text-sm"
+                  />
+                </div>
               </div>
-            </div>
 
-            <div>
-              <label className="block text-xs font-medium text-zinc-300">
-                Password (min 8 characters)
-              </label>
-              <div className="relative mt-1">
-                <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
-                <input
-                  type="password"
-                  required
-                  id="register-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••••"
-                  className="w-full rounded-xl border border-zinc-800 bg-zinc-950/80 py-2.5 pl-10 pr-3.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
-                />
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1.5">
+                  Owner Email Address *
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-theme-muted" />
+                  <input
+                    type="email"
+                    required
+                    id="owner-reg-email"
+                    value={ownerEmail}
+                    onChange={(e) => setOwnerEmail(e.target.value)}
+                    placeholder="owner@localscut.com"
+                    className="theme-input w-full py-2.5 pl-10 pr-3.5 text-sm"
+                  />
+                </div>
               </div>
-            </div>
 
-            <div>
-              <label className="block text-xs font-medium text-zinc-300">
-                Confirm Password
-              </label>
-              <div className="relative mt-1">
-                <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
-                <input
-                  type="password"
-                  required
-                  id="register-confirm-password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••••••"
-                  className="w-full rounded-xl border border-zinc-800 bg-zinc-950/80 py-2.5 pl-10 pr-3.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
-                />
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1.5">
+                  Contact Phone (Optional)
+                </label>
+                <div className="relative">
+                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-theme-muted" />
+                  <input
+                    type="tel"
+                    id="owner-reg-phone"
+                    value={ownerPhone}
+                    onChange={(e) => setOwnerPhone(e.target.value)}
+                    placeholder="9876543210"
+                    className="theme-input w-full py-2.5 pl-10 pr-3.5 text-sm"
+                  />
+                </div>
               </div>
-            </div>
 
-            <button
-              type="submit"
-              disabled={submitting}
-              id="btn-register-submit"
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 py-2.5 text-sm font-semibold text-zinc-950 shadow-md transition hover:bg-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 disabled:opacity-50"
-            >
-              {submitting ? 'Creating account...' : 'Create Studio Account'}
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </form>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1.5">
+                    Password *
+                  </label>
+                  <div className="relative">
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-theme-muted" />
+                    <input
+                      type="password"
+                      required
+                      minLength={8}
+                      id="owner-reg-password"
+                      value={ownerPassword}
+                      onChange={(e) => setOwnerPassword(e.target.value)}
+                      placeholder="Min 8 chars"
+                      className="theme-input w-full py-2.5 pl-10 pr-3.5 text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1.5">
+                    Confirm *
+                  </label>
+                  <div className="relative">
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-theme-muted" />
+                    <input
+                      type="password"
+                      required
+                      minLength={8}
+                      id="owner-reg-confirm-password"
+                      value={ownerConfirmPassword}
+                      onChange={(e) => setOwnerConfirmPassword(e.target.value)}
+                      placeholder="Confirm password"
+                      className="theme-input w-full py-2.5 pl-10 pr-3.5 text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={submitting}
+                id="btn-owner-register"
+                className="theme-btn-primary w-full py-3 text-sm font-bold shadow-md mt-2 flex items-center justify-center gap-2"
+              >
+                {submitting ? 'Creating Studio Workspace...' : 'Register as Studio Owner'}
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </form>
+          )}
+
+          {/* Footer navigation */}
+          <div className="mt-6 border-t border-theme-light pt-4 text-center">
+            <p className="text-xs text-theme-secondary">
+              Already have an account?{' '}
+              <Link href="/login" className="font-bold accent-color hover:underline">
+                Sign in here
+              </Link>
+            </p>
+          </div>
         </div>
-
-        {/* Footer link to login */}
-        <p className="mt-6 text-center text-xs text-zinc-400">
-          Already have an account?{' '}
-          <Link
-            href="/login"
-            className="font-semibold text-amber-400 hover:text-amber-300 hover:underline"
-          >
-            Sign in instead
-          </Link>
-        </p>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-theme-page text-theme-main">
+          <div className="flex flex-col items-center gap-3">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
+            <p className="text-xs text-theme-muted">Loading registration...</p>
+          </div>
+        </div>
+      }
+    >
+      <RegisterForm />
+    </Suspense>
   );
 }

@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { User, Shop } from '../types';
-import { authService, LoginPayload, RegisterPayload } from '../services/auth.service';
+import { authService, LoginPayload, RegisterPayload, RequestOtpPayload, VerifyOtpPayload, OtpResponse } from '../services/auth.service';
 import { shopService } from '../services/shop.service';
 import { getAuthToken, setAuthToken } from './api-client';
 
@@ -12,8 +12,11 @@ interface AuthContextType {
   token: string | null;
   shop: Shop | null;
   isLoading: boolean;
-  login: (payload: LoginPayload) => Promise<void>;
-  register: (payload: RegisterPayload) => Promise<void>;
+  login: (payload: LoginPayload, role?: 'OWNER' | 'CUSTOMER') => Promise<void>;
+  register: (payload: RegisterPayload, role?: 'OWNER' | 'CUSTOMER') => Promise<void>;
+  requestOtp: (target: RequestOtpPayload | string) => Promise<OtpResponse>;
+  verifyOtp: (target: VerifyOtpPayload | string, code?: string, name?: string) => Promise<User>;
+  verifyFirebaseToken: (idToken: string, name?: string) => Promise<User>;
   logout: () => void;
   refreshShop: () => Promise<Shop | null>;
   refreshUser: () => Promise<void>;
@@ -54,7 +57,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setTokenState(storedToken);
       const me = await authService.getMe();
       setUser(me);
-      await fetchShop();
+      if (me.role === 'OWNER') {
+        await fetchShop();
+      } else {
+        setShop(null);
+      }
     } catch {
       setAuthToken(null);
       setTokenState(null);
@@ -69,32 +76,85 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refreshUser();
   }, [refreshUser]);
 
-  const login = async (payload: LoginPayload) => {
+  const login = async (payload: LoginPayload, role: 'OWNER' | 'CUSTOMER' = 'OWNER') => {
     setIsLoading(true);
     try {
-      const res = await authService.login(payload);
+      const res =
+        role === 'CUSTOMER'
+          ? await authService.loginCustomer(payload)
+          : await authService.login(payload);
       setUser(res.user);
       setTokenState(res.accessToken);
-      await fetchShop();
-      router.push('/dashboard');
+      if (res.user.role === 'OWNER') {
+        await fetchShop();
+        router.push('/dashboard');
+      } else {
+        setShop(null);
+        router.push('/customer/profile');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const register = async (payload: RegisterPayload) => {
+  const register = async (payload: RegisterPayload, role: 'OWNER' | 'CUSTOMER' = 'OWNER') => {
     setIsLoading(true);
     try {
-      await authService.register(payload);
-      // Auto login after registration
-      const res = await authService.login({
-        email: payload.email,
-        password: payload.password,
-      });
+      if (role === 'CUSTOMER') {
+        await authService.registerCustomer(payload);
+        const res = await authService.loginCustomer({
+          email: payload.email,
+          password: payload.password,
+        });
+        setUser(res.user);
+        setTokenState(res.accessToken);
+        setShop(null);
+        router.push('/customer/profile');
+      } else {
+        await authService.register(payload);
+        const res = await authService.login({
+          email: payload.email,
+          password: payload.password,
+        });
+        setUser(res.user);
+        setTokenState(res.accessToken);
+        await fetchShop();
+        router.push('/dashboard');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const requestOtp = async (target: RequestOtpPayload | string) => {
+    return authService.requestCustomerOtp(target);
+  };
+
+  const verifyOtp = async (
+    target: VerifyOtpPayload | string,
+    code?: string,
+    name?: string,
+  ): Promise<User> => {
+    setIsLoading(true);
+    try {
+      const res = await authService.verifyCustomerOtp(target, code, name);
       setUser(res.user);
       setTokenState(res.accessToken);
-      await fetchShop();
-      router.push('/dashboard');
+      setShop(null);
+      return res.user;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const verifyFirebaseToken = async (idToken: string, name?: string): Promise<User> => {
+    setIsLoading(true);
+    try {
+      const res = await authService.verifyFirebaseCustomer(idToken, name);
+      setUser(res.user);
+      setTokenState(res.accessToken);
+      setShop(null);
+      return res.user;
     } finally {
       setIsLoading(false);
     }
@@ -117,6 +177,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         login,
         register,
+        requestOtp,
+        verifyOtp,
+        verifyFirebaseToken,
         logout,
         refreshShop: fetchShop,
         refreshUser,

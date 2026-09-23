@@ -8,9 +8,11 @@ import {
   User,
   LogOut,
   ChevronRight,
+  ChevronDown,
   Store,
   Check,
   Palette,
+  Shield,
 } from 'lucide-react';
 
 export function UserProfileMenu() {
@@ -18,18 +20,18 @@ export function UserProfileMenu() {
   const { theme, setTheme, availableThemes } = useTheme();
 
   const [isOpen, setIsOpen] = useState(false);
-  const [activeSubmenu, setActiveSubmenu] = useState<'none' | 'appearance'>('none');
+  const [isAppearanceOpen, setIsAppearanceOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalTab, setModalTab] = useState<'shop' | 'profile' | 'appearance'>('shop');
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Close menus when clicking outside
+  // Close menu when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
-        setActiveSubmenu('none');
+        setIsAppearanceOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -58,165 +60,155 @@ export function UserProfileMenu() {
         .slice(0, 2)
         .join('')
         .toUpperCase()
-    : 'OW';
+    : 'LC';
 
   const openModalWithTab = (tab: 'shop' | 'profile' | 'appearance') => {
     setModalTab(tab);
     setIsModalOpen(true);
     setIsOpen(false);
-    setActiveSubmenu('none');
+    setIsAppearanceOpen(false);
   };
 
   return (
     <div className="relative w-full" ref={containerRef}>
       {/* -------------------------------------------------------------
-          MAIN POPOVER (Positioned directly above user trigger)
+          MAIN POPOVER (Positioned directly above bottom-left user trigger)
+          Fully responsive: fits comfortably within mobile sidebar
          ------------------------------------------------------------- */}
       {isOpen && (
-        <div className="absolute bottom-full left-0 mb-2 w-64 rounded-2xl border border-zinc-700/80 bg-zinc-900 p-1.5 shadow-2xl z-50 text-xs animate-in fade-in slide-in-from-bottom-2 duration-150">
-          {/* Top User Row */}
+        <div className="absolute bottom-full left-0 mb-2 w-full min-w-[240px] max-w-[280px] rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-2 shadow-2xl z-50 text-xs animate-in fade-in slide-in-from-bottom-2 duration-150">
+          {/* Top User Header Row */}
           <button
             type="button"
             onClick={() => openModalWithTab('profile')}
-            className="flex w-full items-center justify-between rounded-xl px-2.5 py-2 hover:bg-zinc-800 transition text-left"
+            className="flex w-full items-center justify-between rounded-xl p-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800/80 transition"
           >
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-zinc-700 text-[11px] font-semibold text-zinc-200">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-zinc-950 text-xs font-bold shadow-xs">
                 {initials}
               </div>
               <div className="min-w-0">
-                <p className="truncate font-semibold text-zinc-100">{user.name}</p>
-                <p className="truncate text-[10px] text-zinc-400 capitalize">
-                  {user.role === 'OWNER' ? 'Shop Owner' : user.role.toLowerCase()}
+                <p className="truncate font-bold text-zinc-900 dark:text-zinc-100">{user.name}</p>
+                <p className="truncate text-[10px] text-zinc-500 dark:text-zinc-400 capitalize">
+                  {user.role === 'OWNER' ? 'Studio Owner' : user.role.toLowerCase()}
                 </p>
               </div>
             </div>
-            <ChevronRight className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+            <ChevronRight className="h-4 w-4 text-zinc-400 shrink-0" />
           </button>
 
-          <div className="my-1 border-t border-zinc-800" />
+          <div className="my-1.5 border-t border-zinc-200 dark:border-zinc-800" />
 
-          {/* Shop Profile item */}
+          {/* Shop Profile Item */}
           <button
             type="button"
             id="btn-menu-shop-profile"
             onClick={() => openModalWithTab('shop')}
-            className="flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-zinc-200 hover:bg-zinc-800 hover:text-white transition text-left"
+            className="flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition text-left"
           >
             <div className="flex items-center gap-2.5">
-              <Store className="h-4 w-4 text-amber-400" />
-              <span>Shop Profile</span>
+              <Store className="h-4 w-4 text-amber-500 shrink-0" />
+              <span className="font-semibold text-xs">Studio Details</span>
             </div>
-            <ChevronRight className="h-3.5 w-3.5 text-zinc-400" />
+            <ChevronRight className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
           </button>
 
-          {/* Appearance item with Flyout */}
-          <div
-            className="relative"
-            onMouseEnter={() => setActiveSubmenu('appearance')}
-          >
+          {/* Appearance Item with INLINE Accordion (Never cuts off on mobile) */}
+          <div>
             <button
               type="button"
-              onClick={() =>
-                setActiveSubmenu(activeSubmenu === 'appearance' ? 'none' : 'appearance')
-              }
-              className={`flex w-full items-center justify-between rounded-xl px-2.5 py-2 transition text-left ${
-                activeSubmenu === 'appearance'
-                  ? 'bg-zinc-800 text-white font-medium'
-                  : 'text-zinc-200 hover:bg-zinc-800 hover:text-white'
-              }`}
+              onClick={() => setIsAppearanceOpen(!isAppearanceOpen)}
+              className="flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition text-left"
             >
               <div className="flex items-center gap-2.5">
-                <Palette className="h-4 w-4 text-zinc-400" />
-                <span>Appearance</span>
+                <Palette className="h-4 w-4 text-amber-500 shrink-0" />
+                <span className="font-semibold text-xs">Appearance</span>
               </div>
-              <ChevronRight className="h-3.5 w-3.5 text-zinc-400" />
+              {isAppearanceOpen ? (
+                <ChevronDown className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+              ) : (
+                <ChevronRight className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+              )}
             </button>
 
-            {/* Appearance Submenu */}
-            {activeSubmenu === 'appearance' && (
-              <div className="absolute left-full bottom-0 ml-1.5 w-56 rounded-2xl border border-zinc-700/80 bg-zinc-900 p-1.5 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-100">
-                <div className="px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 border-b border-zinc-800">
-                  Theme Palette
-                </div>
-                <div className="mt-1 space-y-0.5">
-                  {availableThemes.map((item) => {
-                    const isSelected = theme === item.id;
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => {
-                          setTheme(item.id);
-                          setActiveSubmenu('none');
-                        }}
-                        className={`flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-left transition ${
-                          isSelected
-                            ? 'bg-zinc-800 text-white font-medium'
-                            : 'text-zinc-300 hover:bg-zinc-800/60 hover:text-white'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <span
-                            className="h-2.5 w-2.5 rounded-full shrink-0"
-                            style={{ backgroundColor: item.accentColor }}
-                          />
-                          <span>{item.name}</span>
-                        </div>
-                        {isSelected && <Check className="h-3.5 w-3.5 text-amber-400" />}
-                      </button>
-                    );
-                  })}
-                </div>
+            {/* Inline Theme Selection */}
+            {isAppearanceOpen && (
+              <div className="mt-1 space-y-1 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 p-1.5 border border-zinc-200 dark:border-zinc-800/80">
+                {availableThemes.map((item) => {
+                  const isSelected = theme === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setTheme(item.id);
+                      }}
+                      className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-xs transition ${
+                        isSelected
+                          ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold'
+                          : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="h-2.5 w-2.5 rounded-full shrink-0 shadow-xs"
+                          style={{ backgroundColor: item.accentColor }}
+                        />
+                        <span>{item.name}</span>
+                      </div>
+                      {isSelected && <Check className="h-3.5 w-3.5 text-amber-500 font-bold" />}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
 
-          <div className="my-1 border-t border-zinc-800" />
+          <div className="my-1.5 border-t border-zinc-200 dark:border-zinc-800" />
 
-          {/* Log out item */}
+          {/* Log Out Item */}
           <button
             type="button"
             onClick={logout}
             id="btn-sidebar-logout"
-            className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-zinc-300 hover:bg-red-500/10 hover:text-red-400 transition text-left"
+            className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition text-left font-semibold text-xs"
           >
-            <LogOut className="h-4 w-4" />
-            <span>Log out</span>
+            <LogOut className="h-4 w-4 shrink-0" />
+            <span>Sign Out</span>
           </button>
         </div>
       )}
 
       {/* -------------------------------------------------------------
-          TRIGGER PILL (Matches bottom row of sidebar)
+          TRIGGER BUTTON (Bottom left of sidebar on both desktop & mobile)
          ------------------------------------------------------------- */}
       <button
         type="button"
         id="btn-user-profile-trigger"
         onClick={() => {
           setIsOpen(!isOpen);
-          setActiveSubmenu('none');
+          setIsAppearanceOpen(false);
         }}
-        className={`flex w-full items-center justify-between rounded-xl px-2 py-1.5 transition text-left ${
-          isOpen ? 'bg-zinc-800/80 text-white' : 'hover:bg-zinc-800/50 text-zinc-200'
+        className={`flex w-full items-center justify-between rounded-xl p-2 transition text-left border border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50 dark:bg-zinc-900/60 hover:bg-zinc-100 dark:hover:bg-zinc-900 shadow-xs ${
+          isOpen ? 'ring-2 ring-amber-500/40 border-amber-500/50' : ''
         }`}
       >
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-700 text-xs font-semibold text-zinc-200">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-zinc-950 text-xs font-bold shadow-xs">
             {initials}
           </div>
-          <div className="min-w-0">
-            <p className="truncate text-xs font-semibold text-zinc-100">{user.name}</p>
-            <p className="truncate text-[10px] text-zinc-400 capitalize">
+          <div className="min-w-0 pr-1">
+            <p className="truncate text-xs font-bold text-zinc-900 dark:text-zinc-100">{user.name}</p>
+            <p className="truncate text-[10px] text-zinc-500 dark:text-zinc-400 capitalize">
               {user.role === 'OWNER' ? 'Studio Owner' : user.role.toLowerCase()}
             </p>
           </div>
         </div>
 
-        <Store className="h-4 w-4 text-zinc-400 shrink-0 ml-1" />
+        <ChevronDown className="h-3.5 w-3.5 text-zinc-400 shrink-0 ml-1" />
       </button>
 
-      {/* Settings / Profile Modal (Renders into document.body via Portal) */}
+      {/* Settings / Profile Modal */}
       <AccountModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

@@ -3,185 +3,330 @@
 @tailwind utilities;
 
 /* ============================================================
-   DESIGN TOKENS & PALETTES (OpenAI / Linear inspired)
+   DESIGN TOKENS & SYSTEM PALETTES
    ============================================================ */
-:root {
+:root,
+html.theme-obsidian {
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   
-  /* Dark Mode (Default Obsidian) */
-  --bg-app: #0d0d0f;
-  --bg-sidebar: #09090b;
-  --bg-card: #141417;
-  --bg-card-subtle: #19191d;
-  --bg-input: #121214;
-  --bg-popover: #1f1f23;
-  --border-app: #27272a;
-  --border-subtle: #1f1f23;
-  --text-primary: #f4f4f5;
+  /* Obsidian Gold (Default Luxury Dark) */
+  --bg-page: #09090b;
+  --bg-surface: #141417;
+  --bg-surface-hover: #1c1c21;
+  --bg-surface-elevated: #1e1e24;
+  --bg-input: #121215;
+  --border-main: #27272a;
+  --border-light: #1f1f23;
+  --text-main: #fafafa;
   --text-secondary: #a1a1aa;
   --text-muted: #71717a;
-  --accent: #f59e0b;
+  --accent-color: #f59e0b;
   --accent-hover: #fbbf24;
+  --accent-subtle: rgba(245, 158, 11, 0.12);
+  --accent-border: rgba(245, 158, 11, 0.28);
+  --accent-text: #fbbf24;
+  --accent-contrast: #09090b;
+}
+
+/* Studio Light (Crisp daylight luxury) */
+html.theme-light {
+  --bg-page: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-surface-hover: #f1f5f9;
+  --bg-surface-elevated: #f1f5f9;
+  --bg-input: #ffffff;
+  --border-main: #e2e8f0;
+  --border-light: #f1f5f9;
+  --text-main: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --accent-color: #d97706;
+  --accent-hover: #b45309;
+  --accent-subtle: rgba(217, 119, 6, 0.1);
+  --accent-border: rgba(217, 119, 6, 0.28);
+  --accent-text: #b45309;
+  --accent-contrast: #ffffff;
+}
+
+/* Midnight Emerald (Modern deep slate with emerald highlights) */
+html.theme-midnight {
+  --bg-page: #030712;
+  --bg-surface: #0f172a;
+  --bg-surface-hover: #1e293b;
+  --bg-surface-elevated: #1e293b;
+  --bg-input: #0b1120;
+  --border-main: #1e293b;
+  --border-light: #111827;
+  --text-main: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --accent-color: #10b981;
+  --accent-hover: #34d399;
+  --accent-subtle: rgba(16, 185, 129, 0.12);
+  --accent-border: rgba(16, 185, 129, 0.3);
+  --accent-text: #34d399;
+  --accent-contrast: #030712;
 }
 
 /* ============================================================
-   LIGHT THEME: Crisp, balanced, harmonious daylight palette
-   No jarring high-contrast blocks — soft zinc & slate neutrals
+   GLOBAL BODY & TYPOGRAPHY
    ============================================================ */
-html.theme-light {
-  --bg-app: #f9fafb;
-  --bg-sidebar: #f4f4f5;
-  --bg-card: #ffffff;
-  --bg-card-subtle: #f4f4f5;
-  --bg-input: #ffffff;
-  --bg-popover: #ffffff;
-  --border-app: #e4e4e7;
-  --border-subtle: #f4f4f5;
-  --text-primary: #18181b;
-  --text-secondary: #52525b;
-  --text-muted: #71717a;
-  --accent: #d97706;
-  --accent-hover: #b45309;
+body {
+  color: var(--text-main);
+  background-color: var(--bg-page);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  background-image:
+    radial-gradient(circle at 10% -5%, var(--accent-subtle), transparent 30rem),
+    radial-gradient(circle at 90% 10%, var(--accent-subtle), transparent 25rem);
 }
 
+/* Theme utility classes */
+.bg-theme-page { background-color: var(--bg-page); }
+.bg-theme-surface { background-color: var(--bg-surface); }
+.bg-theme-surface-elevated { background-color: var(--bg-surface-elevated); }
+.bg-theme-input { background-color: var(--bg-input); }
+.border-theme { border-color: var(--border-main); }
+.border-theme-light { border-color: var(--border-light); }
+.text-theme-main { color: var(--text-main); }
+.text-theme-secondary { color: var(--text-secondary); }
+.text-theme-muted { color: var(--text-muted); }
+.accent-color { color: var(--accent-color); }
+.accent-bg { background-color: var(--accent-color); }
+.accent-bg-subtle { background-color: var(--accent-subtle); }
+.accent-border { border-color: var(--accent-border); }
+
+/* Unified Button and Card Component Styles */
+.theme-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-main);
+  box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+}
+
+.theme-card:hover {
+  border-color: var(--accent-border);
+}
+
+.theme-btn-primary {
+  background-color: var(--accent-color);
+  color: #09090b !important;
+  font-weight: 700;
+  transition: all 0.18s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+}
+
+.theme-btn-primary:hover {
+  background-color: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px -6px var(--accent-border);
+}
+
+.theme-btn-primary:active {
+  transform: translateY(0);
+}
+
+.theme-badge-accent {
+  background-color: var(--accent-subtle);
+  color: var(--accent-text);
+  border: 1px solid var(--accent-border);
+  font-weight: 600;
+  border-radius: 9999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+}
+
+.theme-input {
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-main);
+  color: var(--text-main);
+  border-radius: 0.75rem;
+  transition: all 0.15s ease;
+}
+
+.theme-input:focus {
+  border-color: var(--accent-color);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-border);
+}
+
+.theme-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* ============================================================
+   LIGHT THEME ADAPTATION FOR LEGACY UTILITIES
+   Ensures dashboard, forms & modals look crisp and high contrast in light mode
+   ============================================================ */
 html.theme-light body {
-  background-color: #f9fafb !important;
-  color: #18181b !important;
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
 }
 
 html.theme-light aside {
-  background-color: #f4f4f5 !important;
-  border-right-color: #e4e4e7 !important;
+  background-color: #ffffff !important;
+  border-right-color: #e2e8f0 !important;
 }
 
 html.theme-light header {
-  background-color: rgba(244, 244, 245, 0.9) !important;
-  border-bottom-color: #e4e4e7 !important;
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-bottom-color: #e2e8f0 !important;
 }
 
+/* Base Page & Backdrop Mappings */
 html.theme-light .bg-zinc-950,
 html.theme-light .bg-zinc-950\/95,
+html.theme-light .bg-zinc-950\/90,
 html.theme-light .bg-zinc-950\/80,
+html.theme-light .bg-zinc-950\/70,
+html.theme-light .bg-zinc-950\/60,
 html.theme-light .bg-zinc-950\/50,
-html.theme-light .bg-zinc-950\/40 {
-  background-color: #f9fafb !important;
+html.theme-light .bg-zinc-950\/40,
+html.theme-light .bg-zinc-950\/30 {
+  background-color: #f8fafc !important;
 }
 
+/* Card & Surface Mappings */
 html.theme-light .bg-zinc-900,
+html.theme-light .bg-zinc-900\/95,
+html.theme-light .bg-zinc-900\/90,
 html.theme-light .bg-zinc-900\/80,
+html.theme-light .bg-zinc-900\/70,
 html.theme-light .bg-zinc-900\/60,
 html.theme-light .bg-zinc-900\/50,
 html.theme-light .bg-zinc-900\/40,
 html.theme-light .bg-zinc-900\/30 {
   background-color: #ffffff !important;
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
 }
 
+/* Elevated / Sub-Surface Mappings (Toggles, Nested Tabs, Badges) */
+html.theme-light .bg-zinc-800,
+html.theme-light .bg-zinc-800\/90,
+html.theme-light .bg-zinc-800\/80,
+html.theme-light .bg-zinc-800\/70,
+html.theme-light .bg-zinc-800\/60,
+html.theme-light .bg-zinc-800\/50,
+html.theme-light .bg-zinc-800\/40,
+html.theme-light .bg-zinc-800\/30,
+html.theme-light .bg-zinc-700 {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+/* Border Mappings */
 html.theme-light .border-zinc-800,
 html.theme-light .border-zinc-800\/80,
 html.theme-light .border-zinc-800\/60,
+html.theme-light .border-zinc-800\/50,
+html.theme-light .border-zinc-800\/40,
 html.theme-light .border-zinc-700,
-html.theme-light .border-zinc-700\/60 {
-  border-color: #e4e4e7 !important;
+html.theme-light .border-zinc-700\/80,
+html.theme-light .border-zinc-700\/50 {
+  border-color: #e2e8f0 !important;
 }
 
-html.theme-light .divide-zinc-800\/60 > :not([hidden]) ~ :not([hidden]) {
-  border-color: #e4e4e7 !important;
-}
-
-/* Typography in light mode */
+/* Text Contrast */
 html.theme-light .text-white,
-html.theme-light .text-zinc-100,
-html.theme-light .text-zinc-200 {
-  color: #18181b !important;
+html.theme-light .text-zinc-100 {
+  color: #0f172a !important;
 }
 
+html.theme-light .text-zinc-200,
 html.theme-light .text-zinc-300,
 html.theme-light .text-zinc-400 {
-  color: #52525b !important;
+  color: #334155 !important;
 }
 
-html.theme-light .text-zinc-500 {
-  color: #71717a !important;
+html.theme-light .text-zinc-500,
+html.theme-light .text-zinc-600 {
+  color: #64748b !important;
 }
 
-/* Form controls in light mode */
+/* Primary Action Buttons */
+html.theme-light .theme-btn-primary,
+html.theme-light button.bg-amber-500,
+html.theme-light a.bg-amber-500 {
+  background-color: #f59e0b !important;
+  color: #09090b !important;
+  font-weight: 700 !important;
+}
+
+html.theme-light button.bg-amber-500 *,
+html.theme-light a.bg-amber-500 *,
+html.theme-light .theme-btn-primary * {
+  color: #09090b !important;
+}
+
+/* Form Inputs, Selects & Textareas in Light Mode */
 html.theme-light input,
-html.theme-light textarea {
+html.theme-light textarea,
+html.theme-light select {
   background-color: #ffffff !important;
-  border-color: #d4d4d8 !important;
-  color: #18181b !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
 }
 
-html.theme-light input:focus,
-html.theme-light textarea:focus {
-  border-color: #d97706 !important;
-  box-shadow: 0 0 0 1px #d97706 !important;
+html.theme-light select option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
 }
 
 html.theme-light input::placeholder,
 html.theme-light textarea::placeholder {
-  color: #a1a1aa !important;
+  color: #94a3b8 !important;
 }
 
-/* Table styling in light mode */
-html.theme-light thead,
-html.theme-light .bg-zinc-950\/40 {
-  background-color: #f4f4f5 !important;
-  color: #52525b !important;
+html.theme-light input:focus,
+html.theme-light textarea:focus,
+html.theme-light select:focus {
+  border-color: #d97706 !important;
+  box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.2) !important;
 }
 
-html.theme-light tbody tr:hover {
-  background-color: #f4f4f5 !important;
+html.theme-light input:focus,
+html.theme-light textarea:focus,
+html.theme-light select:focus {
+  border-color: #d97706 !important;
+  box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.25) !important;
 }
 
-/* Avatar badge in light mode */
-html.theme-light .bg-zinc-800 {
-  background-color: #e4e4e7 !important;
-  color: #92400e !important;
-}
-
-/* ============================================================
-   MIDNIGHT EMERALD THEME (Deep graphite with crisp emerald accents)
-   ============================================================ */
-html.theme-midnight {
-  --bg-app: #030712;
-  --bg-sidebar: #050a17;
-  --bg-card: rgba(15, 23, 42, 0.6);
-  --bg-popover: #0f172a;
-  --border-app: #1e293b;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --accent: #10b981;
-}
-
-html.theme-midnight body {
-  background-color: #030712 !important;
-}
-
-html.theme-midnight aside {
-  background-color: #050a17 !important;
-  border-color: #1e293b !important;
-}
-
-html.theme-midnight header {
-  background-color: rgba(5, 10, 23, 0.85) !important;
-  border-color: #1e293b !important;
-}
-
-/* Base Body */
-body {
-  color: var(--text-primary);
-  background-color: var(--bg-app);
-  font-family: var(--font-sans);
+/* Studio shell refinements */
+.studio-shell {
   min-height: 100vh;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  background-color: var(--bg-page);
+  color: var(--text-main);
+}
+
+.studio-content {
+  animation: studio-enter 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.studio-surface {
+  border: 1px solid var(--border-main);
+  background-color: var(--bg-surface);
+  border-radius: 1rem;
+}
+
+@keyframes studio-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Subtle scrollbars */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -189,10 +334,10 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(113, 113, 122, 0.3);
+  background: var(--border-main);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(113, 113, 122, 0.5);
+  background: var(--text-muted);
 }

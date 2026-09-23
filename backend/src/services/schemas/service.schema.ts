@@ -23,6 +23,9 @@ export class ServiceEntity {
   @Prop({ required: true, min: 1 })
   durationMinutes: number;
 
+  @Prop({ required: false, min: 0, default: 0 })
+  bufferTime?: number;
+
   @Prop({ default: true })
   isActive: boolean;
 

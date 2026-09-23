@@ -2,6 +2,12 @@
 
 A production-ready foundation for a multi-tenant barber shop management and appointment booking platform.
 
+Level 2.2 adds owner-managed Barber ↔ Service assignments. `GET /api/v1/barbers/:barberId/services` returns a barber's assigned catalog services and `PUT` replaces the complete assignment set. The `barber_services` collection has a unique `{ barberId, serviceId }` index.
+
+Level 2.3 adds the Availability & Slot Engine answering: *"When can this barber perform this service?"* (`GET /api/v1/barbers/:barberId/availability?date=YYYY-MM-DD&serviceId=<serviceId>`). It calculates real-time available booking slots by combining weekly schedules, breaks, exact-date exceptions (`OFF` / `CUSTOM_HOURS`), service duration and buffer time, timezone-safe calculations (`Shop.timezone`), past-slot filtering, and appointment conflict lookup abstractions.
+
+Level 2.4 adds Customer Accounts and role-based authorization (`Role.CUSTOMER` and `Role.OWNER`). Customers can register (`POST /api/v1/auth/customer/register`), log in (`POST /api/v1/auth/customer/login`), and manage their personal profile (`GET/PATCH /api/v1/customers/me`). Strict role isolation guards ensure customers cannot access shop management or owner endpoints (`403 Forbidden`) and owners cannot access customer-only endpoints (`403 Forbidden`).
+
 **Level 1 Scope**: Enables a Shop Owner to register, log in, create and configure their barber shop profile, manage barbers (create, update, activate/deactivate), manage services (create, update, activate/deactivate), and inspect shop metrics through an intuitive web UI backed by a REST API and MongoDB.
 
 ---

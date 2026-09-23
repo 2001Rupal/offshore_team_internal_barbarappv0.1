@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreateShopDto {
-  @ApiProperty({ example: 'Royal Cuts', description: 'Name of the barber shop' })
+  @ApiProperty({ example: "Local's Cut", description: 'Name of the barber shop' })
   @IsString()
   @IsNotEmpty({ message: 'Shop name should not be empty' })
   @MaxLength(100)
@@ -42,4 +42,9 @@ export class CreateShopDto {
   @IsOptional()
   @IsString()
   phone?: string;
+
+  @ApiPropertyOptional({ example: 'Asia/Kolkata', description: 'Shop timezone (IANA timezone name)' })
+  @IsOptional()
+  @IsString()
+  timezone?: string;
 }

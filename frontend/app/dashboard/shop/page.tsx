@@ -81,8 +81,9 @@ export default function ShopManagementPage() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-zinc-800/80 pb-6">
         <div>
+          <p className="studio-kicker mb-2">Business profile</p>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl font-bold tracking-tight text-white">
+            <h1 className="studio-page-title text-2xl font-bold tracking-tight text-white">
               Shop Profile & Settings
             </h1>
             <span
@@ -132,7 +133,7 @@ export default function ShopManagementPage() {
       {/* Form Card */}
       <form
         onSubmit={handleSubmit}
-        className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-7 shadow-xl backdrop-blur-sm space-y-7"
+        className="studio-surface rounded-2xl p-7 space-y-7"
       >
         {/* Section 1: Identity */}
         <div>
@@ -152,7 +153,7 @@ export default function ShopManagementPage() {
                 id="shop-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Royal Cuts Studio"
+                placeholder="e.g. Local's Cut Studio"
                 className="mt-1.5 w-full rounded-xl border border-zinc-800 bg-zinc-950/80 px-3.5 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
               />
             </div>

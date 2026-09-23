@@ -21,12 +21,28 @@ async function bootstrap() {
     }),
   );
 
-  // CORS
+  // CORS - allow localhost, 127.0.0.1, and local LAN IPs (10.x, 192.168.x, 172.x) for mobile testing
   app.enableCors({
-    origin: corsOrigin.includes(',') ? corsOrigin.split(',') : corsOrigin,
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      const isAllowed =
+        corsOrigin.includes(origin) ||
+        origin.startsWith('http://localhost') ||
+        origin.startsWith('http://127.0.0.1') ||
+        origin.startsWith('http://10.') ||
+        origin.startsWith('http://192.168.') ||
+        origin.startsWith('http://172.');
+      callback(null, isAllowed);
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'Accept',
+      'idempotency-key',
+      'Idempotency-Key',
+    ],
   });
 
   // Global Prefix
@@ -46,9 +62,9 @@ async function bootstrap() {
 
   // Swagger Documentation Setup
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('Barber Studio REST API')
+    .setTitle("Local's Cut REST API")
     .setDescription(
-      'REST API specification for Studio Owner management, Barber roster, and Service catalog.',
+      "REST API specification for Local's Cut studio management, barbers, and appointments.",
     )
     .setVersion('1.0')
     .addBearerAuth()
@@ -57,7 +73,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api/docs', app, document);
 
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
   logger.log(`🚀 Barber Level 1 Backend running at: http://localhost:${port}/api/v1`);
   logger.log(`📚 Swagger API Docs available at: http://localhost:${port}/api/docs`);
 }

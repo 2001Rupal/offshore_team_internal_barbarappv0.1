@@ -2,7 +2,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class UpdateShopDto {
-  @ApiPropertyOptional({ example: 'Royal Cuts Deluxe', description: 'Updated name' })
+  @ApiPropertyOptional({ example: "Local's Cut Deluxe", description: 'Updated name' })
   @IsOptional()
   @IsString()
   @MaxLength(100)
@@ -42,4 +42,9 @@ export class UpdateShopDto {
   @IsOptional()
   @IsString()
   phone?: string;
+
+  @ApiPropertyOptional({ example: 'Asia/Kolkata', description: 'Updated shop timezone' })
+  @IsOptional()
+  @IsString()
+  timezone?: string;
 }

@@ -17,6 +17,7 @@ import {
   IndianRupee,
   Search,
 } from 'lucide-react';
+import { Portal } from '../../../components/portal';
 
 export default function ServicesPage() {
   const { shop } = useAuth();
@@ -159,32 +160,6 @@ export default function ServicesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header & Main Actions */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-zinc-800/80 pb-6">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl font-bold tracking-tight text-white">
-              Service Catalog
-            </h1>
-            <span className="rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs font-semibold text-zinc-300">
-              {services.length} Services
-            </span>
-          </div>
-          <p className="text-sm text-zinc-400 mt-1">
-            Configure haircuts, treatments, durations, and pricing in Indian Rupees (₹)
-          </p>
-        </div>
-
-        <button
-          onClick={openAddModal}
-          id="btn-add-service"
-          className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-semibold text-zinc-950 shadow-md transition hover:bg-amber-400"
-        >
-          <PlusCircle className="h-4 w-4" />
-          <span>Add New Service</span>
-        </button>
-      </div>
-
       {feedbackMsg && (
         <div
           className={`flex items-center justify-between rounded-xl border p-4 text-sm ${
@@ -207,7 +182,84 @@ export default function ServicesPage() {
         </div>
       )}
 
-      {/* Search & Filter Toolbar */}
+      {/* Quick Interactive KPI Stat Cards */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+        <button
+          type="button"
+          onClick={() => setStatusFilter('ALL')}
+          className={`rounded-2xl border p-4 text-left transition ${
+            statusFilter === 'ALL'
+              ? 'border-amber-500/50 bg-amber-500/5 shadow-md'
+              : 'border-zinc-800/80 bg-zinc-900/40 hover:border-zinc-700'
+          }`}
+        >
+          <div className="flex items-center justify-between text-xs text-zinc-400">
+            <span>Total Catalog</span>
+            <Sparkles className="h-4 w-4 text-zinc-500" />
+          </div>
+          <p className="mt-2 text-2xl font-bold text-white">{services.length}</p>
+          <span className="mt-1 block text-[11px] text-zinc-400">Services in menu</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setStatusFilter('ACTIVE')}
+          className={`rounded-2xl border p-4 text-left transition ${
+            statusFilter === 'ACTIVE'
+              ? 'border-emerald-500/50 bg-emerald-500/5 shadow-md'
+              : 'border-zinc-800/80 bg-zinc-900/40 hover:border-zinc-700'
+          }`}
+        >
+          <div className="flex items-center justify-between text-xs text-zinc-400">
+            <span>Active Offerings</span>
+            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+          </div>
+          <p className="mt-2 text-2xl font-bold text-emerald-400">
+            {services.filter((s) => s.isActive).length}
+          </p>
+          <span className="mt-1 block text-[11px] text-zinc-400">Bookable treatments</span>
+        </button>
+
+        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 text-left">
+          <div className="flex items-center justify-between text-xs text-zinc-400">
+            <span>Avg Service Price</span>
+            <IndianRupee className="h-4 w-4 text-purple-400" />
+          </div>
+          <p className="mt-2 text-2xl font-bold text-white">
+            ₹
+            {services.filter((s) => s.isActive).length > 0
+              ? Math.round(
+                  services
+                    .filter((s) => s.isActive)
+                    .reduce((acc, s) => acc + s.price, 0) /
+                    services.filter((s) => s.isActive).length,
+                )
+              : 0}
+          </p>
+          <span className="mt-1 block text-[11px] text-zinc-400">Across active services</span>
+        </div>
+
+        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4 text-left">
+          <div className="flex items-center justify-between text-xs text-zinc-400">
+            <span>Avg Duration</span>
+            <Clock className="h-4 w-4 text-blue-400" />
+          </div>
+          <p className="mt-2 text-2xl font-bold text-white">
+            {services.filter((s) => s.isActive).length > 0
+              ? Math.round(
+                  services
+                    .filter((s) => s.isActive)
+                    .reduce((acc, s) => acc + s.durationMinutes, 0) /
+                    services.filter((s) => s.isActive).length,
+                )
+              : 0}{' '}
+            <span className="text-sm font-normal text-zinc-400">min</span>
+          </p>
+          <span className="mt-1 block text-[11px] text-zinc-400">Treatment slot length</span>
+        </div>
+      </div>
+
+      {/* Search & Filter Toolbar with Add Service Button */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
@@ -220,43 +272,55 @@ export default function ServicesPage() {
           />
         </div>
 
-        {/* Filter Tabs */}
-        <div className="flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900/60 p-1 text-xs">
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Filter Tabs */}
+          <div className="flex items-center gap-1 rounded-xl border border-zinc-800 bg-zinc-900/60 p-1 text-xs">
+            <button
+              onClick={() => setStatusFilter('ALL')}
+              className={`rounded-lg px-3 py-1.5 font-medium transition ${
+                statusFilter === 'ALL'
+                  ? 'bg-zinc-800 text-white shadow-sm'
+                  : 'text-zinc-400 hover:text-zinc-200'
+              }`}
+            >
+              All ({services.length})
+            </button>
+            <button
+              onClick={() => setStatusFilter('ACTIVE')}
+              className={`rounded-lg px-3 py-1.5 font-medium transition ${
+                statusFilter === 'ACTIVE'
+                  ? 'bg-zinc-800 text-emerald-400 shadow-sm'
+                  : 'text-zinc-400 hover:text-zinc-200'
+              }`}
+            >
+              Active ({services.filter((s) => s.isActive).length})
+            </button>
+            <button
+              onClick={() => setStatusFilter('INACTIVE')}
+              className={`rounded-lg px-3 py-1.5 font-medium transition ${
+                statusFilter === 'INACTIVE'
+                  ? 'bg-zinc-800 text-zinc-300 shadow-sm'
+                  : 'text-zinc-400 hover:text-zinc-200'
+              }`}
+            >
+              Inactive ({services.filter((s) => !s.isActive).length})
+            </button>
+          </div>
+
+          {/* Add Service Button relocated next to active/inactive section */}
           <button
-            onClick={() => setStatusFilter('ALL')}
-            className={`rounded-lg px-3 py-1 font-medium transition ${
-              statusFilter === 'ALL'
-                ? 'bg-zinc-800 text-white shadow-sm'
-                : 'text-zinc-400 hover:text-zinc-200'
-            }`}
+            onClick={openAddModal}
+            id="btn-add-service"
+            className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-3.5 py-2 text-xs font-semibold text-zinc-950 shadow-md transition hover:bg-amber-400"
           >
-            All ({services.length})
-          </button>
-          <button
-            onClick={() => setStatusFilter('ACTIVE')}
-            className={`rounded-lg px-3 py-1 font-medium transition ${
-              statusFilter === 'ACTIVE'
-                ? 'bg-zinc-800 text-emerald-400 shadow-sm'
-                : 'text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            Active ({services.filter((s) => s.isActive).length})
-          </button>
-          <button
-            onClick={() => setStatusFilter('INACTIVE')}
-            className={`rounded-lg px-3 py-1 font-medium transition ${
-              statusFilter === 'INACTIVE'
-                ? 'bg-zinc-800 text-zinc-300 shadow-sm'
-                : 'text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            Inactive ({services.filter((s) => !s.isActive).length})
+            <PlusCircle className="h-4 w-4" />
+            <span>Add Service</span>
           </button>
         </div>
       </div>
 
       {/* Services Table */}
-      <div className="overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/40 shadow-xl backdrop-blur-sm">
+      <div className="studio-surface overflow-hidden rounded-2xl">
         {isLoading ? (
           <div className="flex h-48 items-center justify-center">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
@@ -362,24 +426,32 @@ export default function ServicesPage() {
 
       {/* Add Service Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md">
-          <div className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3.5">
+        <Portal onClose={() => !createMutation.isPending && setIsAddModalOpen(false)}>
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto"
+            onClick={(e) => {
+              if (e.target === e.currentTarget && !createMutation.isPending) setIsAddModalOpen(false);
+            }}
+          >
+          <div className="relative w-full max-w-md rounded-2xl border border-zinc-200 dark:border-zinc-700/80 bg-white dark:bg-zinc-950 p-6 sm:p-7 shadow-2xl text-zinc-900 dark:text-zinc-100 my-auto max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-150 ring-1 ring-black/5 dark:ring-white/5">
+            <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3.5 shrink-0">
               <div>
-                <h2 className="text-base font-semibold text-white">Add Grooming Service</h2>
-                <p className="text-xs text-zinc-400 mt-0.5">Add a new treatment to your pricing catalog</p>
+                <h2 className="text-base font-bold text-zinc-900 dark:text-white">Add Grooming Service</h2>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Add a new treatment to your pricing catalog</p>
               </div>
               <button
                 onClick={() => setIsAddModalOpen(false)}
-                className="text-zinc-400 hover:text-zinc-200"
+                className="rounded-xl p-1.5 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-700 dark:hover:text-zinc-200 transition"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleAddSubmit} className="mt-4 space-y-3.5">
+            <form onSubmit={handleAddSubmit} className="mt-4 space-y-3.5 overflow-y-auto flex-1 pr-0.5 min-h-0">
               <div>
-                <label className="block text-xs font-medium text-zinc-300">Service Name *</label>
+                <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">Service Name *</label>
                 <input
                   type="text"
                   required
@@ -387,25 +459,25 @@ export default function ServicesPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Skin Fade Haircut"
-                  className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-900/80 px-3.5 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 px-3.5 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-zinc-300">Description</label>
+                <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">Description</label>
                 <textarea
                   rows={2}
                   id="add-service-description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="e.g. Precision skin fade with razor edging and hot towel wash"
-                  className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-900/80 px-3.5 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 px-3.5 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-zinc-300">
+                  <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
                     Price (₹) *
                   </label>
                   <input
@@ -418,12 +490,12 @@ export default function ServicesPage() {
                       setPrice(e.target.value === '' ? '' : Number(e.target.value))
                     }
                     placeholder="250"
-                    className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-900/80 px-3.5 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
+                    className="mt-1 w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 px-3.5 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-zinc-300">
+                  <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
                     Duration (Minutes) *
                   </label>
                   <input
@@ -436,16 +508,16 @@ export default function ServicesPage() {
                       setDurationMinutes(e.target.value === '' ? '' : Number(e.target.value))
                     }
                     placeholder="30"
-                    className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-900/80 px-3.5 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
+                    className="mt-1 w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 px-3.5 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:border-amber-500 focus:outline-none"
                   />
                 </div>
               </div>
 
-              <div className="mt-6 flex justify-end gap-2.5 pt-3 border-t border-zinc-800/80">
+              <div className="mt-6 flex justify-end gap-2.5 pt-3 border-t border-zinc-200 dark:border-zinc-800 shrink-0">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="rounded-xl border border-zinc-800 px-4 py-2 text-xs font-medium text-zinc-400 hover:bg-zinc-900 transition"
+                  className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-2 text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition"
                 >
                   Cancel
                 </button>
@@ -461,52 +533,61 @@ export default function ServicesPage() {
             </form>
           </div>
         </div>
+        </Portal>
       )}
 
       {/* Edit Service Modal */}
       {editingService && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md">
-          <div className="w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3.5">
+        <Portal onClose={() => !updateMutation.isPending && setEditingService(null)}>
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto"
+            onClick={(e) => {
+              if (e.target === e.currentTarget && !updateMutation.isPending) setEditingService(null);
+            }}
+          >
+          <div className="relative w-full max-w-md rounded-2xl border border-zinc-200 dark:border-zinc-700/80 bg-white dark:bg-zinc-950 p-6 sm:p-7 shadow-2xl text-zinc-900 dark:text-zinc-100 my-auto max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-150 ring-1 ring-black/5 dark:ring-white/5">
+            <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-3.5 shrink-0">
               <div>
-                <h2 className="text-base font-semibold text-white">Edit Service</h2>
-                <p className="text-xs text-zinc-400 mt-0.5">Modify pricing or service parameters</p>
+                <h2 className="text-base font-bold text-zinc-900 dark:text-white">Edit Service</h2>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Modify pricing or service parameters</p>
               </div>
               <button
                 onClick={() => setEditingService(null)}
-                className="text-zinc-400 hover:text-zinc-200"
+                className="rounded-xl p-1.5 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-700 dark:hover:text-zinc-200 transition"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleEditSubmit} className="mt-4 space-y-3.5">
+            <form onSubmit={handleEditSubmit} className="mt-4 space-y-3.5 overflow-y-auto flex-1 pr-0.5 min-h-0">
               <div>
-                <label className="block text-xs font-medium text-zinc-300">Service Name *</label>
+                <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">Service Name *</label>
                 <input
                   type="text"
                   required
                   id="edit-service-name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-900/80 px-3.5 py-2 text-sm text-zinc-100 focus:border-amber-500 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 px-3.5 py-2 text-sm text-zinc-900 dark:text-zinc-100 focus:border-amber-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-zinc-300">Description</label>
+                <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">Description</label>
                 <textarea
                   rows={2}
                   id="edit-service-description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-900/80 px-3.5 py-2 text-sm text-zinc-100 focus:border-amber-500 focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 px-3.5 py-2 text-sm text-zinc-900 dark:text-zinc-100 focus:border-amber-500 focus:outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-zinc-300">
+                  <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
                     Price (₹) *
                   </label>
                   <input
@@ -518,12 +599,12 @@ export default function ServicesPage() {
                     onChange={(e) =>
                       setPrice(e.target.value === '' ? '' : Number(e.target.value))
                     }
-                    className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-900/80 px-3.5 py-2 text-sm text-zinc-100 focus:border-amber-500 focus:outline-none"
+                    className="mt-1 w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 px-3.5 py-2 text-sm text-zinc-900 dark:text-zinc-100 focus:border-amber-500 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-zinc-300">
+                  <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
                     Duration (Minutes) *
                   </label>
                   <input
@@ -535,16 +616,16 @@ export default function ServicesPage() {
                     onChange={(e) =>
                       setDurationMinutes(e.target.value === '' ? '' : Number(e.target.value))
                     }
-                    className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-900/80 px-3.5 py-2 text-sm text-zinc-100 focus:border-amber-500 focus:outline-none"
+                    className="mt-1 w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 px-3.5 py-2 text-sm text-zinc-900 dark:text-zinc-100 focus:border-amber-500 focus:outline-none"
                   />
                 </div>
               </div>
 
-              <div className="mt-6 flex justify-end gap-2.5 pt-3 border-t border-zinc-800/80">
+              <div className="mt-6 flex justify-end gap-2.5 pt-3 border-t border-zinc-200 dark:border-zinc-800 shrink-0">
                 <button
                   type="button"
                   onClick={() => setEditingService(null)}
-                  className="rounded-xl border border-zinc-800 px-4 py-2 text-xs font-medium text-zinc-400 hover:bg-zinc-900 transition"
+                  className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-2 text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition"
                 >
                   Cancel
                 </button>
@@ -560,19 +641,28 @@ export default function ServicesPage() {
             </form>
           </div>
         </div>
+        </Portal>
       )}
 
       {/* Confirmation Modal for Toggle Status */}
       {deactivatingService && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md">
-          <div className="w-full max-w-sm rounded-2xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl">
-            <h2 className="text-base font-semibold text-white">
+        <Portal onClose={() => !statusMutation.isPending && setDeactivatingService(null)}>
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto"
+            onClick={(e) => {
+              if (e.target === e.currentTarget && !statusMutation.isPending) setDeactivatingService(null);
+            }}
+          >
+          <div className="relative w-full max-w-sm rounded-2xl border border-zinc-200 dark:border-zinc-700/80 bg-white dark:bg-zinc-950 p-6 shadow-2xl text-zinc-900 dark:text-zinc-100 my-auto animate-in zoom-in-95 duration-150 ring-1 ring-black/5 dark:ring-white/5">
+            <h2 className="text-base font-bold text-zinc-900 dark:text-white">
               {deactivatingService.isActive ? 'Deactivate Service' : 'Reactivate Service'}
             </h2>
-            <p className="mt-2 text-xs text-zinc-400 leading-relaxed">
+            <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
               Are you sure you want to{' '}
               {deactivatingService.isActive ? 'temporarily deactivate' : 'reactivate'}{' '}
-              <strong className="text-zinc-200">{deactivatingService.name}</strong>?
+              <strong className="text-zinc-900 dark:text-zinc-200">{deactivatingService.name}</strong>?
               {deactivatingService.isActive &&
                 ' The service item will remain preserved in database history.'}
             </p>
@@ -581,7 +671,7 @@ export default function ServicesPage() {
               <button
                 type="button"
                 onClick={() => setDeactivatingService(null)}
-                className="rounded-xl border border-zinc-800 px-4 py-2 text-xs font-medium text-zinc-400 hover:bg-zinc-900 transition"
+                className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-2 text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition"
               >
                 Cancel
               </button>
@@ -610,6 +700,7 @@ export default function ServicesPage() {
             </div>
           </div>
         </div>
+        </Portal>
       )}
     </div>
   );

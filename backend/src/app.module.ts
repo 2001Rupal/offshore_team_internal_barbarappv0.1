@@ -6,6 +6,12 @@ import { AuthModule } from './auth/auth.module';
 import { ShopsModule } from './shops/shops.module';
 import { BarbersModule } from './barbers/barbers.module';
 import { ServicesModule } from './services/services.module';
+import { SchedulesModule } from './schedules/schedules.module';
+import { BarberServicesModule } from './barber-services/barber-services.module';
+import { AvailabilityModule } from './availability/availability.module';
+import { CustomersModule } from './customers/customers.module';
+import { PublicModule } from './public/public.module';
+import { AppointmentsModule } from './appointments/appointments.module';
 
 @Module({
   imports: [
@@ -27,6 +33,12 @@ import { ServicesModule } from './services/services.module';
     ShopsModule,
     BarbersModule,
     ServicesModule,
+    SchedulesModule,
+    BarberServicesModule,
+    AvailabilityModule,
+    CustomersModule,
+    PublicModule,
+    AppointmentsModule,
   ],
 })
 export class AppModule {}

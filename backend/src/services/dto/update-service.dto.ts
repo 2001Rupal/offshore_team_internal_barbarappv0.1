@@ -27,4 +27,11 @@ export class UpdateServiceDto {
   @IsInt({ message: 'Duration must be an integer' })
   @Min(1, { message: 'durationMinutes must be a positive integer' })
   durationMinutes?: number;
+
+  @ApiPropertyOptional({ example: 10, description: 'Updated buffer time in minutes' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt({ message: 'bufferTime must be an integer' })
+  @Min(0, { message: 'bufferTime must not be less than 0' })
+  bufferTime?: number;
 }

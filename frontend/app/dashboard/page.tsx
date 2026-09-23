@@ -20,6 +20,8 @@ import {
   IndianRupee,
   Briefcase,
   Settings,
+  Scissors,
+  Calendar,
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -48,68 +50,49 @@ export default function DashboardPage() {
       : 0;
 
   return (
-    <div className="space-y-8">
-      {/* Top Banner Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-zinc-800/80 pb-6">
+    <div className="space-y-6">
+      {/* Overview Executive Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-zinc-800/80 pb-5">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-white">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-amber-500">
               Studio Workspace
-            </h1>
-            <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-400 border border-emerald-500/20">
-              Live
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-400 border border-emerald-500/20">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Live</span>
             </span>
           </div>
-          <p className="text-sm text-zinc-400 mt-1">
-            Real-time management for <span className="text-zinc-200 font-medium">{shop ? shop.name : 'your shop'}</span>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-white">
+            {shop ? shop.name : "Local's Cut"}
+          </h1>
+          <p className="text-xs text-zinc-400 mt-0.5">
+            Welcome back, <strong className="text-zinc-200">{user?.name || 'Owner'}</strong> • {shop?.city || 'Studio Hub'}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          {shop ? (
-            <>
-              <Link
-                href="/dashboard/barbers"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900/80 px-3.5 py-2 text-xs font-semibold text-zinc-200 hover:border-zinc-700 hover:bg-zinc-800 transition shadow-sm"
-              >
-                <PlusCircle className="h-3.5 w-3.5 text-amber-400" />
-                <span>Add Barber</span>
-              </Link>
-              <Link
-                href="/dashboard/services"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-800 bg-zinc-900/80 px-3.5 py-2 text-xs font-semibold text-zinc-200 hover:border-zinc-700 hover:bg-zinc-800 transition shadow-sm"
-              >
-                <PlusCircle className="h-3.5 w-3.5 text-emerald-400" />
-                <span>Add Service</span>
-              </Link>
-              <button
-                type="button"
-                onClick={() => {
-                  if (typeof window !== 'undefined') {
-                    window.dispatchEvent(new CustomEvent('open-shop-profile', { detail: { tab: 'shop' } }));
-                  }
-                }}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500 px-3.5 py-2 text-xs font-semibold text-zinc-950 hover:bg-amber-400 transition shadow-sm"
-              >
-                <Store className="h-3.5 w-3.5" />
-                <span>Shop Profile</span>
-              </button>
-            </>
-          ) : (
-            <button
-              type="button"
-              id="btn-create-shop-banner"
-              onClick={() => {
-                if (typeof window !== 'undefined') {
-                  window.dispatchEvent(new CustomEvent('open-shop-profile', { detail: { tab: 'shop' } }));
-                }
-              }}
-              className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-zinc-950 shadow-md transition hover:bg-amber-400"
-            >
-              <PlusCircle className="h-4 w-4" />
-              <span>Configure Shop</span>
-            </button>
-          )}
+          <Link
+            href="/dashboard/appointments"
+            className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-xs font-bold text-zinc-950 shadow-md transition hover:bg-amber-400"
+          >
+            <Calendar className="h-3.5 w-3.5" />
+            <span>Client Bookings</span>
+          </Link>
+          <Link
+            href="/dashboard/shifts"
+            className="inline-flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900/80 px-4 py-2.5 text-xs font-semibold text-zinc-200 hover:border-zinc-700 hover:text-white transition shadow-sm"
+          >
+            <Clock className="h-3.5 w-3.5 text-amber-400" />
+            <span>Manage Shifts</span>
+          </Link>
+          <Link
+            href="/dashboard/services"
+            className="inline-flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900/80 px-4 py-2.5 text-xs font-semibold text-zinc-200 hover:border-zinc-700 hover:text-white transition shadow-sm"
+          >
+            <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+            <span>Services</span>
+          </Link>
         </div>
       </div>
 
@@ -140,50 +123,14 @@ export default function DashboardPage() {
       )}
 
       {/* Primary KPI Metrics */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Shop Info Card */}
-        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 shadow-lg backdrop-blur-sm transition hover:border-zinc-700">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-zinc-400">Shop Status</span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400">
-              <Store className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-4">
-            <p className="text-lg font-bold text-white truncate">
-              {shop ? shop.name : 'Unconfigured'}
-            </p>
-            <p className="mt-1 flex items-center gap-1.5 text-xs text-zinc-400">
-              {shop ? (
-                <>
-                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-                  <span>{shop.city} • Active</span>
-                </>
-              ) : (
-                <span>Action required</span>
-              )}
-            </p>
-          </div>
-          <div className="mt-4 border-t border-zinc-800/60 pt-3">
-            <button
-              type="button"
-              onClick={() => {
-                if (typeof window !== 'undefined') {
-                  window.dispatchEvent(new CustomEvent('open-shop-profile', { detail: { tab: 'shop' } }));
-                }
-              }}
-              className="flex w-full items-center justify-between text-xs font-medium text-amber-400 hover:text-amber-300 transition"
-            >
-              <span>{shop ? 'View profile' : 'Create shop'}</span>
-              <ArrowUpRight className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        </div>
-
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {/* Staff Barbers */}
-        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 shadow-lg backdrop-blur-sm transition hover:border-zinc-700">
+        <Link
+          href="/dashboard/barbers"
+          className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 shadow-lg backdrop-blur-sm transition hover:border-zinc-700 hover:bg-zinc-900/60 block"
+        >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-zinc-400">Staff Barbers</span>
+            <span className="text-xs font-medium text-zinc-400">Team Barbers</span>
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400">
               <Users className="h-4 w-4" />
             </div>
@@ -191,29 +138,27 @@ export default function DashboardPage() {
           <div className="mt-4">
             <div className="flex items-baseline gap-2">
               <p className="text-2xl font-bold text-white">{barbers.length}</p>
-              <span className="text-xs text-emerald-400 font-medium">
+              <span className="text-xs text-emerald-400 font-semibold">
                 {activeBarbers.length} active
               </span>
             </div>
-            <p className="mt-1 text-xs text-zinc-400">
-              Team members on roster
+            <p className="mt-1 text-[11px] text-zinc-400">
+              Assigned to shop shifts
             </p>
           </div>
-          <div className="mt-4 border-t border-zinc-800/60 pt-3">
-            <Link
-              href="/dashboard/barbers"
-              className="flex items-center justify-between text-xs font-medium text-amber-400 hover:text-amber-300"
-            >
-              <span>Manage staff</span>
-              <ArrowUpRight className="h-3.5 w-3.5" />
-            </Link>
+          <div className="mt-4 border-t border-zinc-800/60 pt-3 flex items-center justify-between text-xs font-medium text-amber-400">
+            <span>Manage staff</span>
+            <ArrowUpRight className="h-3.5 w-3.5" />
           </div>
-        </div>
+        </Link>
 
         {/* Grooming Services */}
-        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 shadow-lg backdrop-blur-sm transition hover:border-zinc-700">
+        <Link
+          href="/dashboard/services"
+          className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 shadow-lg backdrop-blur-sm transition hover:border-zinc-700 hover:bg-zinc-900/60 block"
+        >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-zinc-400">Catalog Services</span>
+            <span className="text-xs font-medium text-zinc-400">Catalog Offerings</span>
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400">
               <Sparkles className="h-4 w-4" />
             </div>
@@ -221,49 +166,64 @@ export default function DashboardPage() {
           <div className="mt-4">
             <div className="flex items-baseline gap-2">
               <p className="text-2xl font-bold text-white">{services.length}</p>
-              <span className="text-xs text-emerald-400 font-medium">
+              <span className="text-xs text-emerald-400 font-semibold">
                 {activeServices.length} active
               </span>
             </div>
-            <p className="mt-1 text-xs text-zinc-400">
-              Grooming treatments
+            <p className="mt-1 text-[11px] text-zinc-400">
+              Bookable haircut & styling menu
             </p>
           </div>
-          <div className="mt-4 border-t border-zinc-800/60 pt-3">
-            <Link
-              href="/dashboard/services"
-              className="flex items-center justify-between text-xs font-medium text-amber-400 hover:text-amber-300"
-            >
-              <span>Manage services</span>
-              <ArrowUpRight className="h-3.5 w-3.5" />
-            </Link>
+          <div className="mt-4 border-t border-zinc-800/60 pt-3 flex items-center justify-between text-xs font-medium text-amber-400">
+            <span>View menu catalog</span>
+            <ArrowUpRight className="h-3.5 w-3.5" />
           </div>
-        </div>
+        </Link>
 
         {/* Average Price */}
-        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 shadow-lg backdrop-blur-sm transition hover:border-zinc-700">
+        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 shadow-lg backdrop-blur-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-zinc-400">Avg Service Price</span>
+            <span className="text-xs font-medium text-zinc-400">Average Treatment</span>
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400">
               <IndianRupee className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-4">
             <p className="text-2xl font-bold text-white">₹{avgPrice}</p>
-            <p className="mt-1 text-xs text-zinc-400">
-              Based on active offerings
+            <p className="mt-1 text-[11px] text-zinc-400">
+              Across {activeServices.length} active services
             </p>
           </div>
-          <div className="mt-4 border-t border-zinc-800/60 pt-3">
-            <Link
-              href="/dashboard/services"
-              className="flex items-center justify-between text-xs font-medium text-amber-400 hover:text-amber-300"
-            >
-              <span>View catalog</span>
-              <ArrowUpRight className="h-3.5 w-3.5" />
-            </Link>
+          <div className="mt-4 border-t border-zinc-800/60 pt-3 text-[11px] text-zinc-400">
+            Based on catalog pricing
           </div>
         </div>
+
+        {/* Operating Base Clock */}
+        <Link
+          href="/dashboard/shifts"
+          className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5 shadow-lg backdrop-blur-sm transition hover:border-zinc-700 hover:bg-zinc-900/60 block"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-zinc-400">Studio Operating Base</span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400">
+              <Clock className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="mt-4">
+            <p className="text-lg font-bold text-white truncate">
+              {shop?.timezone || 'Asia/Kolkata'}
+            </p>
+            <p className="mt-1 text-[11px] text-emerald-400 flex items-center gap-1">
+              <CheckCircle2 className="h-3 w-3" />
+              <span>Shift engine active</span>
+            </p>
+          </div>
+          <div className="mt-4 border-t border-zinc-800/60 pt-3 flex items-center justify-between text-xs font-medium text-amber-400">
+            <span>Configure shifts</span>
+            <ArrowUpRight className="h-3.5 w-3.5" />
+          </div>
+        </Link>
       </div>
 
       {/* Roster & Services Side-by-Side Panels */}
@@ -277,7 +237,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <h2 className="text-sm font-semibold text-zinc-100">Barbers Roster</h2>
-                <p className="text-xs text-zinc-400">Active shop barbers</p>
+                <p className="text-xs text-zinc-400">Staff members and specialties</p>
               </div>
             </div>
             <Link
@@ -306,25 +266,41 @@ export default function DashboardPage() {
                       <p className="text-xs font-semibold text-zinc-200">{barber.name}</p>
                       <p className="text-[11px] text-zinc-400">
                         {barber.experienceYears !== undefined
-                          ? `${barber.experienceYears} yrs experience`
+                          ? `${barber.experienceYears} yrs exp`
                           : 'Staff member'}
                       </p>
                     </div>
                   </div>
-                  <span
-                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                      barber.isActive
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                        : 'bg-zinc-800 text-zinc-400'
-                    }`}
-                  >
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href="/dashboard/barbers"
+                      title="Manage services & schedule"
+                      className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-1.5 text-zinc-400 hover:border-amber-500/40 hover:text-amber-400 transition"
+                    >
+                      <Scissors className="h-3 w-3" />
+                    </Link>
+                    <Link
+                      href="/dashboard/shifts"
+                      title="Manage working hours & shifts"
+                      className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-1.5 text-zinc-400 hover:border-amber-500/40 hover:text-amber-400 transition"
+                    >
+                      <Calendar className="h-3 w-3" />
+                    </Link>
                     <span
-                      className={`h-1 w-1 rounded-full ${
-                        barber.isActive ? 'bg-emerald-400' : 'bg-zinc-500'
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                        barber.isActive
+                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                          : 'bg-zinc-800 text-zinc-400'
                       }`}
-                    />
-                    {barber.isActive ? 'Active' : 'Inactive'}
-                  </span>
+                    >
+                      <span
+                        className={`h-1 w-1 rounded-full ${
+                          barber.isActive ? 'bg-emerald-400' : 'bg-zinc-500'
+                        }`}
+                      />
+                      {barber.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
                 </div>
               ))
             )}

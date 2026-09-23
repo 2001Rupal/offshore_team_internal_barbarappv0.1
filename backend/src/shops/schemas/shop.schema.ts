@@ -35,6 +35,9 @@ export class Shop {
   @Prop({ required: false, trim: true })
   phone?: string;
 
+  @Prop({ required: false, trim: true, default: 'Asia/Kolkata' })
+  timezone: string;
+
   @Prop({ default: true })
   isActive: boolean;
 

@@ -1,5 +1,5 @@
 import { apiClient } from '../lib/api-client';
-import { Barber } from '../types';
+import { Barber, BarberServicesResponse } from '../types';
 
 export interface CreateBarberPayload {
   name: string;
@@ -45,6 +45,17 @@ export const barberService = {
     return apiClient<Barber>(`/barbers/${barberId}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ isActive }),
+    });
+  },
+
+  async getBarberServices(barberId: string): Promise<BarberServicesResponse> {
+    return apiClient<BarberServicesResponse>(`/barbers/${barberId}/services`);
+  },
+
+  async updateBarberServices(barberId: string, serviceIds: string[]): Promise<BarberServicesResponse> {
+    return apiClient<BarberServicesResponse>(`/barbers/${barberId}/services`, {
+      method: 'PUT',
+      body: JSON.stringify({ serviceIds }),
     });
   },
 };

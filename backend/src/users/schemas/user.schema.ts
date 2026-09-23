@@ -8,17 +8,23 @@ export type UserDocument = User & Document;
 export class User {
   _id: Types.ObjectId;
 
-  @Prop({ required: true, trim: true })
+  @Prop({ required: true, trim: true, default: 'Customer' })
   name: string;
 
-  @Prop({ required: true, unique: true, lowercase: true, trim: true, index: true })
-  email: string;
+  @Prop({ required: false, unique: true, sparse: true, lowercase: true, trim: true, index: true })
+  email?: string;
 
-  @Prop({ required: false, trim: true })
+  @Prop({ required: false, trim: true, sparse: true, index: true })
   phone?: string;
 
-  @Prop({ required: true })
-  passwordHash: string;
+  @Prop({ required: false })
+  passwordHash?: string;
+
+  @Prop({ required: false, min: 5, max: 120 })
+  age?: number;
+
+  @Prop({ required: false, trim: true })
+  gender?: string;
 
   @Prop({ required: true, enum: Role, default: Role.OWNER })
   role: Role;

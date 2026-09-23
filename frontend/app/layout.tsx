@@ -3,8 +3,8 @@ import type { Metadata } from 'next';
 import { Providers } from '../components/providers';
 
 export const metadata: Metadata = {
-  title: 'Barber Studio — Professional Shop & Staff Management',
-  description: 'The all-in-one studio management platform for modern barber shops and stylists.',
+  title: "Local's Cut — Premium Barber Experience & Grooming",
+  description: "Book signature haircuts, beard grooming, and master styling at Local's Cut.",
 };
 
 export default function RootLayout({

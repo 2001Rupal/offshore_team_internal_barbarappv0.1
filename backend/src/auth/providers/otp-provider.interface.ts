@@ -8,4 +8,5 @@ export interface IOtpProvider {
   getLastSentOtp(destination: string): string | null;
 }
 
+
 export const OTP_PROVIDER = 'OTP_PROVIDER';

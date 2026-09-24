@@ -106,6 +106,7 @@ const DEFAULT_ASSIGNMENTS: Record<string, string[]> = {
   '6ab414e4caebc69792e1dedf': ['6ab414edcaebc69792e1def3', '6ab414edcaebc69792e1def6', '6ab414eecaebc69792e1def9'],
 };
 
+
 function BookingFlow() {
   const searchParams = useSearchParams();
   const initialServiceId = searchParams.get('serviceId');
@@ -410,13 +411,12 @@ function BookingFlow() {
               return (
                 <div
                   key={s.num}
-                  className={`flex flex-col items-center gap-1 pb-2 border-b-2 transition-all ${
-                    isActive
+                  className={`flex flex-col items-center gap-1 pb-2 border-b-2 transition-all ${isActive
                       ? 'border-amber-500 accent-color font-bold'
                       : isCompleted
-                      ? 'border-emerald-500 text-emerald-400'
-                      : 'border-theme-light text-theme-muted'
-                  }`}
+                        ? 'border-emerald-500 text-emerald-400'
+                        : 'border-theme-light text-theme-muted'
+                    }`}
                 >
                   <div className="flex items-center gap-1 sm:gap-1.5">
                     {isCompleted ? (
@@ -459,11 +459,10 @@ function BookingFlow() {
                   <div
                     key={svc.id}
                     onClick={() => setSelectedServiceId(svc.id)}
-                    className={`theme-card cursor-pointer rounded-2xl p-5 transition-all flex flex-col justify-between ${
-                      isSelected
+                    className={`theme-card cursor-pointer rounded-2xl p-5 transition-all flex flex-col justify-between ${isSelected
                         ? 'border-amber-500 ring-2 ring-amber-500/20 shadow-md'
                         : 'hover:border-theme'
-                    }`}
+                      }`}
                   >
                     <div>
                       <div className="flex items-center justify-between mb-2">
@@ -532,11 +531,10 @@ function BookingFlow() {
           {/* OPTION 1: ANY BARBER (DEFAULT & FEATURED) */}
           <div
             onClick={() => setSelectedBarberId(null)}
-            className={`cursor-pointer rounded-2xl p-5 sm:p-6 transition-all border flex items-start justify-between gap-4 ${
-              selectedBarberId === null
+            className={`cursor-pointer rounded-2xl p-5 sm:p-6 transition-all border flex items-start justify-between gap-4 ${selectedBarberId === null
                 ? 'border-amber-500 bg-amber-500/10 ring-2 ring-amber-500/25 shadow-lg'
                 : 'border-theme bg-theme-surface hover:border-theme-secondary'
-            }`}
+              }`}
           >
             <div className="flex items-start gap-4">
               <div className="h-12 w-12 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
@@ -555,11 +553,10 @@ function BookingFlow() {
 
             <div className="shrink-0 pt-1">
               <div
-                className={`h-5 w-5 rounded-full border flex items-center justify-center transition-all ${
-                  selectedBarberId === null
+                className={`h-5 w-5 rounded-full border flex items-center justify-center transition-all ${selectedBarberId === null
                     ? 'border-amber-500 bg-amber-500 text-black'
                     : 'border-theme-muted'
-                }`}
+                  }`}
               >
                 {selectedBarberId === null && <Check className="h-3.5 w-3.5 stroke-[3]" />}
               </div>
@@ -581,11 +578,10 @@ function BookingFlow() {
                 <div
                   key={barber.id}
                   onClick={() => setSelectedBarberId(barber.id)}
-                  className={`theme-card cursor-pointer rounded-2xl p-5 transition-all flex flex-col justify-between ${
-                    isSelected
+                  className={`theme-card cursor-pointer rounded-2xl p-5 transition-all flex flex-col justify-between ${isSelected
                       ? 'border-amber-500 ring-2 ring-amber-500/20 shadow-md'
                       : 'hover:border-theme'
-                  }`}
+                    }`}
                 >
                   <div>
                     <div className="flex items-center gap-3 mb-3">
@@ -715,13 +711,12 @@ function BookingFlow() {
                             key={s.startTime}
                             disabled={!isAvail}
                             onClick={() => setSelectedSlot(s)}
-                            className={`rounded-xl border py-2 px-1 text-[11px] sm:text-xs font-semibold whitespace-nowrap text-center transition ${
-                              isSelected
+                            className={`rounded-xl border py-2 px-1 text-[11px] sm:text-xs font-semibold whitespace-nowrap text-center transition ${isSelected
                                 ? 'border-amber-500 bg-amber-500 text-black font-bold shadow-md'
                                 : isAvail
-                                ? 'border-theme bg-theme-surface-elevated text-theme-main hover:border-amber-500/40'
-                                : 'border-theme-light text-theme-muted opacity-30 cursor-not-allowed line-through'
-                            }`}
+                                  ? 'border-theme bg-theme-surface-elevated text-theme-main hover:border-amber-500/40'
+                                  : 'border-theme-light text-theme-muted opacity-30 cursor-not-allowed line-through'
+                              }`}
                           >
                             {format12Hour(s.startTime)}
                           </button>
@@ -744,13 +739,12 @@ function BookingFlow() {
                             key={s.startTime}
                             disabled={!isAvail}
                             onClick={() => setSelectedSlot(s)}
-                            className={`rounded-xl border py-2 px-1 text-[11px] sm:text-xs font-semibold whitespace-nowrap text-center transition ${
-                              isSelected
+                            className={`rounded-xl border py-2 px-1 text-[11px] sm:text-xs font-semibold whitespace-nowrap text-center transition ${isSelected
                                 ? 'border-amber-500 bg-amber-500 text-black font-bold shadow-md'
                                 : isAvail
-                                ? 'border-theme bg-theme-surface-elevated text-theme-main hover:border-amber-500/40'
-                                : 'border-theme-light text-theme-muted opacity-30 cursor-not-allowed line-through'
-                            }`}
+                                  ? 'border-theme bg-theme-surface-elevated text-theme-main hover:border-amber-500/40'
+                                  : 'border-theme-light text-theme-muted opacity-30 cursor-not-allowed line-through'
+                              }`}
                           >
                             {format12Hour(s.startTime)}
                           </button>
@@ -773,13 +767,12 @@ function BookingFlow() {
                             key={s.startTime}
                             disabled={!isAvail}
                             onClick={() => setSelectedSlot(s)}
-                            className={`rounded-xl border py-2 px-1 text-[11px] sm:text-xs font-semibold whitespace-nowrap text-center transition ${
-                              isSelected
+                            className={`rounded-xl border py-2 px-1 text-[11px] sm:text-xs font-semibold whitespace-nowrap text-center transition ${isSelected
                                 ? 'border-amber-500 bg-amber-500 text-black font-bold shadow-md'
                                 : isAvail
-                                ? 'border-theme bg-theme-surface-elevated text-theme-main hover:border-amber-500/40'
-                                : 'border-theme-light text-theme-muted opacity-30 cursor-not-allowed line-through'
-                            }`}
+                                  ? 'border-theme bg-theme-surface-elevated text-theme-main hover:border-amber-500/40'
+                                  : 'border-theme-light text-theme-muted opacity-30 cursor-not-allowed line-through'
+                              }`}
                           >
                             {format12Hour(s.startTime)}
                           </button>

@@ -7,22 +7,37 @@ import { CustomerNav } from '../../components/customer-nav';
 import { CustomerFooter } from '../../components/customer-footer';
 import { publicService, PublicServiceItem, PublicShop } from '../../services/public.service';
 
+const DEFAULT_SERVICES: PublicServiceItem[] = [
+  { id: '6ab414edcaebc69792e1def3', name: 'Haircut', description: 'Classic haircut with wash and styling', durationMinutes: 30, price: 250, isActive: true },
+  { id: '6ab414edcaebc69792e1def6', name: 'Beard', description: 'Precision beard trim & hot towel line up', durationMinutes: 20, price: 150, isActive: true },
+  { id: '6ab414eecaebc69792e1def9', name: 'Fade', description: 'Skin fade with precision detailing', durationMinutes: 40, price: 300, isActive: true },
+  { id: '6ab414eecaebc69792e1defc', name: 'Haircut+Beard', description: 'Complete grooming combo experience', durationMinutes: 50, price: 350, isActive: true },
+];
+
 export default function ServicesPage() {
-  const [services, setServices] = useState<PublicServiceItem[]>([]);
+  const [services, setServices] = useState<PublicServiceItem[]>(DEFAULT_SERVICES);
   const [shop, setShop] = useState<PublicShop | null>(null);
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
     Promise.all([
       publicService.getShop().catch(() => null),
       publicService.getShopServices().catch(() => []),
     ])
       .then(([s, svc]) => {
-        setShop(s);
-        setServices(svc);
+        if (!isMounted) return;
+        if (s) setShop(s);
+        if (svc && svc.length > 0) setServices(svc);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const filteredServices = services.filter((s) =>

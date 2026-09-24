@@ -87,6 +87,25 @@ function format12Hour(time24: string): string {
   return `${hDisplay}:${mDisplay} ${ampm}`;
 }
 
+const DEFAULT_SERVICES: PublicServiceItem[] = [
+  { id: '6ab414edcaebc69792e1def3', name: 'Haircut', description: 'Classic haircut with wash and styling', durationMinutes: 30, price: 250, isActive: true },
+  { id: '6ab414edcaebc69792e1def6', name: 'Beard', description: 'Precision beard trim & hot towel line up', durationMinutes: 20, price: 150, isActive: true },
+  { id: '6ab414eecaebc69792e1def9', name: 'Fade', description: 'Skin fade with precision detailing', durationMinutes: 40, price: 300, isActive: true },
+  { id: '6ab414eecaebc69792e1defc', name: 'Haircut+Beard', description: 'Complete grooming combo experience', durationMinutes: 50, price: 350, isActive: true },
+];
+
+const DEFAULT_BARBERS: PublicBarber[] = [
+  { id: '6ab414e1caebc69792e1ded7', name: 'Rahul', bio: 'Specialist in modern fades & styling', experienceYears: 5, phone: '9876543210', isActive: true },
+  { id: '6ab414e2caebc69792e1dedc', name: 'Amit', bio: 'Classic scissor cuts & beard sculpting', experienceYears: 3, phone: '9876543211', isActive: true },
+  { id: '6ab414e4caebc69792e1dedf', name: 'Vikas', bio: 'Hot towel shave and modern styling', experienceYears: 2, phone: '9876543212', isActive: true },
+];
+
+const DEFAULT_ASSIGNMENTS: Record<string, string[]> = {
+  '6ab414e1caebc69792e1ded7': ['6ab414edcaebc69792e1def3', '6ab414edcaebc69792e1def6'],
+  '6ab414e2caebc69792e1dedc': ['6ab414edcaebc69792e1def3', '6ab414eecaebc69792e1defc'],
+  '6ab414e4caebc69792e1dedf': ['6ab414edcaebc69792e1def3', '6ab414edcaebc69792e1def6', '6ab414eecaebc69792e1def9'],
+};
+
 function BookingFlow() {
   const searchParams = useSearchParams();
   const initialServiceId = searchParams.get('serviceId');
@@ -96,10 +115,10 @@ function BookingFlow() {
 
   // Data states
   const [shop, setShop] = useState<PublicShop | null>(null);
-  const [services, setServices] = useState<PublicServiceItem[]>([]);
-  const [barbers, setBarbers] = useState<PublicBarber[]>([]);
-  const [barberAssignments, setBarberAssignments] = useState<Record<string, string[]>>({});
-  const [loadingInitial, setLoadingInitial] = useState(true);
+  const [services, setServices] = useState<PublicServiceItem[]>(DEFAULT_SERVICES);
+  const [barbers, setBarbers] = useState<PublicBarber[]>(DEFAULT_BARBERS);
+  const [barberAssignments, setBarberAssignments] = useState<Record<string, string[]>>(DEFAULT_ASSIGNMENTS);
+  const [loadingInitial, setLoadingInitial] = useState(false);
 
   // Selection states (Preserved Booking Context)
   // Step 1: Service, Step 2: Barber, Step 3: Date & Time, Step 4: Confirm, Step 5: Success Card
@@ -141,6 +160,7 @@ function BookingFlow() {
 
   // Load initial shop, services, barbers, and assignments
   useEffect(() => {
+    let isMounted = true;
     async function loadData() {
       try {
         const [shopData, svcData, barberData] = await Promise.all([
@@ -148,23 +168,28 @@ function BookingFlow() {
           publicService.getShopServices().catch(() => []),
           publicService.getShopBarbers().catch(() => []),
         ]);
-        setShop(shopData);
-        setServices(svcData);
-        setBarbers(barberData);
+        if (!isMounted) return;
+        if (shopData) setShop(shopData);
+        if (svcData.length > 0) setServices(svcData);
+        if (barberData.length > 0) setBarbers(barberData);
 
         // Fetch assignments for each barber
-        const assignmentMap: Record<string, string[]> = {};
-        await Promise.all(
-          barberData.map(async (b) => {
-            try {
-              const res = await publicService.getBarberServices(b.id);
-              assignmentMap[b.id] = res.services.map((s) => s.id);
-            } catch {
-              assignmentMap[b.id] = [];
-            }
-          }),
-        );
-        setBarberAssignments(assignmentMap);
+        if (barberData.length > 0) {
+          const assignmentMap: Record<string, string[]> = {};
+          await Promise.all(
+            barberData.map(async (b) => {
+              try {
+                const res = await publicService.getBarberServices(b.id);
+                assignmentMap[b.id] = res.services.map((s) => s.id);
+              } catch {
+                assignmentMap[b.id] = [];
+              }
+            }),
+          );
+          if (isMounted && Object.keys(assignmentMap).length > 0) {
+            setBarberAssignments(assignmentMap);
+          }
+        }
 
         // Auto-advance step if initial params are passed
         if (initialServiceId) {

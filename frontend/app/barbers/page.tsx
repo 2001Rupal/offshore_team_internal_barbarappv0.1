@@ -16,19 +16,28 @@ interface BarberWithServices extends PublicBarber {
   assignedServices?: PublicServiceItem[];
 }
 
+const DEFAULT_BARBERS: BarberWithServices[] = [
+  { id: '6ab414e1caebc69792e1ded7', name: 'Rahul', bio: 'Specialist in modern fades & styling', experienceYears: 5, phone: '9876543210', isActive: true },
+  { id: '6ab414e2caebc69792e1dedc', name: 'Amit', bio: 'Classic scissor cuts & beard sculpting', experienceYears: 3, phone: '9876543211', isActive: true },
+  { id: '6ab414e4caebc69792e1dedf', name: 'Vikas', bio: 'Hot towel shave and modern styling', experienceYears: 2, phone: '9876543212', isActive: true },
+];
+
 export default function BarbersPage() {
-  const [barbers, setBarbers] = useState<BarberWithServices[]>([]);
+  const [barbers, setBarbers] = useState<BarberWithServices[]>(DEFAULT_BARBERS);
   const [shop, setShop] = useState<PublicShop | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
     async function load() {
       try {
         const [shopData, rawBarbers] = await Promise.all([
           publicService.getShop().catch(() => null),
           publicService.getShopBarbers().catch(() => []),
         ]);
-        setShop(shopData);
+        if (!isMounted) return;
+        if (shopData) setShop(shopData);
+        if (rawBarbers.length === 0) return;
 
         // Fetch assigned services for each active barber in parallel
         const withServices = await Promise.all(

@@ -23,13 +23,27 @@ import {
   PublicServiceItem,
 } from '../services/public.service';
 
+const DEFAULT_SERVICES: PublicServiceItem[] = [
+  { id: '6ab414edcaebc69792e1def3', name: 'Haircut', description: 'Classic haircut with wash and styling', durationMinutes: 30, price: 250, isActive: true },
+  { id: '6ab414edcaebc69792e1def6', name: 'Beard', description: 'Precision beard trim & hot towel line up', durationMinutes: 20, price: 150, isActive: true },
+  { id: '6ab414eecaebc69792e1def9', name: 'Fade', description: 'Skin fade with precision detailing', durationMinutes: 40, price: 300, isActive: true },
+  { id: '6ab414eecaebc69792e1defc', name: 'Haircut+Beard', description: 'Complete grooming combo experience', durationMinutes: 50, price: 350, isActive: true },
+];
+
+const DEFAULT_BARBERS: PublicBarber[] = [
+  { id: '6ab414e1caebc69792e1ded7', name: 'Rahul', bio: 'Specialist in modern fades & styling', experienceYears: 5, phone: '9876543210', isActive: true },
+  { id: '6ab414e2caebc69792e1dedc', name: 'Amit', bio: 'Classic scissor cuts & beard sculpting', experienceYears: 3, phone: '9876543211', isActive: true },
+  { id: '6ab414e4caebc69792e1dedf', name: 'Vikas', bio: 'Hot towel shave and modern styling', experienceYears: 2, phone: '9876543212', isActive: true },
+];
+
 export default function HomePage() {
   const [shop, setShop] = useState<PublicShop | null>(null);
-  const [barbers, setBarbers] = useState<PublicBarber[]>([]);
-  const [services, setServices] = useState<PublicServiceItem[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [barbers, setBarbers] = useState<PublicBarber[]>(DEFAULT_BARBERS);
+  const [services, setServices] = useState<PublicServiceItem[]>(DEFAULT_SERVICES);
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
+    let isMounted = true;
     async function loadShopData() {
       try {
         const [shopData, barbersData, servicesData] = await Promise.all([
@@ -37,14 +51,21 @@ export default function HomePage() {
           publicService.getShopBarbers().catch(() => []),
           publicService.getShopServices().catch(() => []),
         ]);
-        setShop(shopData);
-        setBarbers(barbersData);
-        setServices(servicesData);
+        if (!isMounted) return;
+        if (shopData) setShop(shopData);
+        if (barbersData.length > 0) setBarbers(barbersData);
+        if (servicesData.length > 0) setServices(servicesData);
+      } catch {
+        // Keep resilient defaults
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     }
     loadShopData();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (

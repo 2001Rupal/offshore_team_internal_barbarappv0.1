@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   RefreshCw,
   User as UserIcon,
+  Sparkles,
 } from 'lucide-react';
 
 export default function LoginPage() {
@@ -60,6 +61,47 @@ export default function LoginPage() {
     }
   }, [user, isLoading, router]);
 
+  // Quick 1-Click Demo Login as Studio Owner
+  const handleQuickDemoOwner = async () => {
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    setRole('OWNER');
+    setOwnerEmail('owner@example.com');
+    setOwnerPassword('change-me');
+    setSubmitting(true);
+    try {
+      await login({ email: 'owner@example.com', password: 'change-me' }, 'OWNER');
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Owner demo authentication failed.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Quick 1-Click Demo Login as Customer
+  const handleQuickDemoCustomer = async () => {
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    setRole('CUSTOMER');
+    setCustomerInput('9876543210');
+    setSubmitting(true);
+    try {
+      const res: any = await requestOtp({ phone: '9876543210' });
+      setOtpSent(true);
+      setCountdown(60);
+      const codeToUse = res?.devOtp || '123456';
+      setOtpCode(codeToUse);
+      setSuccessMsg(`Demo code loaded: ${codeToUse}. Click "Verify Code & Sign In" below.`);
+    } catch {
+      // Fallback for offline/cold start: allow direct OTP verification with 123456
+      setOtpSent(true);
+      setOtpCode('123456');
+      setSuccessMsg('Demo customer loaded. Verification code: 123456.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   // Request Customer OTP
   const handleRequestCustomerOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,13 +128,18 @@ export default function LoginPage() {
         ? { email: val.toLowerCase() }
         : { phone: cleanDigits };
 
-      const res = await requestOtp(target);
+      const res: any = await requestOtp(target);
       setOtpSent(true);
       setCountdown(60);
       if (res.email) {
         setTargetEmail(res.email);
       }
-      setSuccessMsg(res.message || 'Verification code sent to your registered email!');
+      if (res?.devOtp) {
+        setOtpCode(res.devOtp);
+      } else {
+        setOtpCode('123456');
+      }
+      setSuccessMsg(res.message || 'Verification code sent! For instant testing use code: 123456');
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to dispatch verification code. Please try again.');
     } finally {
@@ -211,6 +258,39 @@ export default function LoginPage() {
             </button>
           </div>
 
+          {/* Quick Demo Access Bar */}
+          <div className="mb-5 p-3 rounded-xl border border-amber-500/20 bg-amber-500/5 space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold text-amber-500 flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5" />
+                1-Click Quick Demo Access
+              </span>
+              <span className="text-[10px] text-theme-muted">Instant evaluation</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                id="btn-quick-demo-customer"
+                onClick={handleQuickDemoCustomer}
+                disabled={submitting}
+                className="rounded-lg border border-theme bg-theme-surface hover:bg-theme-surface-elevated py-2 px-2 text-xs font-semibold text-theme-main transition text-center shadow-sm flex items-center justify-center gap-1.5"
+              >
+                <UserIcon className="h-3.5 w-3.5 text-amber-500" />
+                <span>Demo Customer</span>
+              </button>
+              <button
+                type="button"
+                id="btn-quick-demo-owner"
+                onClick={handleQuickDemoOwner}
+                disabled={submitting}
+                className="rounded-lg border border-theme bg-theme-surface hover:bg-theme-surface-elevated py-2 px-2 text-xs font-semibold text-theme-main transition text-center shadow-sm flex items-center justify-center gap-1.5"
+              >
+                <Lock className="h-3.5 w-3.5 text-amber-500" />
+                <span>Demo Owner</span>
+              </button>
+            </div>
+          </div>
+
           {/* Feedback Alerts */}
           {errorMsg && (
             <div className="mb-5 flex items-start gap-2.5 rounded-xl border border-red-500/20 bg-red-500/10 p-3.5 text-xs text-red-500">
@@ -254,6 +334,16 @@ export default function LoginPage() {
                         className="theme-input w-full py-2.5 pl-10 pr-3.5 text-sm"
                       />
                     </div>
+                    <p className="mt-1.5 text-[11px] text-theme-muted">
+                      💡 Demo Customer Number:{' '}
+                      <button
+                        type="button"
+                        onClick={() => setCustomerInput('9876543210')}
+                        className="underline font-mono text-amber-500 hover:opacity-80"
+                      >
+                        9876543210
+                      </button>
+                    </p>
                   </div>
 
                   <button
@@ -285,6 +375,17 @@ export default function LoginPage() {
                       className="accent-color hover:underline font-semibold text-[11px]"
                     >
                       Change Number
+                    </button>
+                  </div>
+
+                  <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-2.5 text-xs text-amber-600 dark:text-amber-400 flex items-center justify-between">
+                    <span>💡 Demo verification code: <strong className="font-mono">123456</strong></span>
+                    <button
+                      type="button"
+                      onClick={() => setOtpCode('123456')}
+                      className="text-[11px] underline font-bold ml-2 hover:opacity-80"
+                    >
+                      Use 123456
                     </button>
                   </div>
 
@@ -338,6 +439,21 @@ export default function LoginPage() {
           ) : (
             /* SHOP OWNER PASSWORD LOGIN */
             <form onSubmit={handleOwnerLogin} className="space-y-4">
+              <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-2.5 text-xs text-amber-600 dark:text-amber-400 flex items-center justify-between">
+                <span>
+                  Demo: <strong className="font-mono">owner@example.com</strong> / <strong className="font-mono">change-me</strong>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOwnerEmail('owner@example.com');
+                    setOwnerPassword('change-me');
+                  }}
+                  className="text-[11px] underline font-bold ml-2 hover:opacity-80"
+                >
+                  Auto-fill
+                </button>
+              </div>
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-theme-muted mb-1.5">
                   Studio Owner Email

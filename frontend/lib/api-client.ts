@@ -1,36 +1,30 @@
 const getApiUrl = () => {
-  // If explicitly configured with a non-localhost URL in environment, use it
-  if (process.env.NEXT_PUBLIC_API_URL && !process.env.NEXT_PUBLIC_API_URL.includes('localhost')) {
-    return process.env.NEXT_PUBLIC_API_URL;
-  }
   if (typeof window !== 'undefined') {
     const host = window.location.hostname;
-    // When running on Vercel (or any non-local public domain), always point to the live Render backend
-    if (
-      host.includes('vercel.app') ||
-      (host !== 'localhost' &&
-        host !== '127.0.0.1' &&
-        !host.startsWith('192.168.') &&
-        !host.startsWith('10.') &&
-        !host.startsWith('172.'))
-    ) {
-      return 'https://barber-backend-91hy.onrender.com/api/v1';
+
+    // 1. Local development (use 127.0.0.1 to avoid Windows IPv6 ::1 ECONNREFUSED)
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return 'http://127.0.0.1:3001/api/v1';
     }
 
-    // If accessed from a mobile phone on the local network (192.168.x, 10.x, 172.x),
-    // target that same local IP on port 3001
-    const isLanIp =
+    // 2. Mobile LAN testing (192.168.x.x, 10.x.x.x, 172.x)
+    if (
       host.startsWith('192.168.') ||
       host.startsWith('10.') ||
-      host.startsWith('172.');
-    if (isLanIp) {
+      host.startsWith('172.')
+    ) {
       return `${window.location.protocol}//${host}:3001/api/v1`;
     }
+
+    // 3. Live production deployments (Vercel, Render, custom domains) -> Live Render backend
+    return 'https://barber-backend-91hy.onrender.com/api/v1';
   }
-  if (process.env.NEXT_PUBLIC_API_URL) {
+
+  // Server-side rendering (SSR) fallback
+  if (process.env.NEXT_PUBLIC_API_URL && !process.env.NEXT_PUBLIC_API_URL.includes('localhost') && !process.env.NEXT_PUBLIC_API_URL.includes('127.0.0.1')) {
     return process.env.NEXT_PUBLIC_API_URL;
   }
-  return 'http://localhost:3001/api/v1';
+  return 'https://barber-backend-91hy.onrender.com/api/v1';
 };
 
 export class ApiErrorResponse extends Error {
@@ -85,33 +79,49 @@ export async function apiClient<T>(
 
   const url = `${getApiUrl()}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
+  // Abort request after 15 seconds to prevent indefinite hangs during server wake-ups
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-  if (!response.ok) {
-    let errorData: any;
-    try {
-      errorData = await response.json();
-    } catch {
-      errorData = { message: response.statusText || 'Request failed' };
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers,
+      signal: options.signal || controller.signal,
+    });
+
+    if (!response.ok) {
+      let errorData: any;
+      try {
+        errorData = await response.json();
+      } catch {
+        errorData = { message: response.statusText || 'Request failed' };
+      }
+
+      const messages = Array.isArray(errorData.message)
+        ? errorData.message
+        : [errorData.message || 'An unexpected error occurred'];
+
+      throw new ApiErrorResponse(
+        response.status,
+        errorData.error || 'API Error',
+        messages,
+      );
     }
 
-    const messages = Array.isArray(errorData.message)
-      ? errorData.message
-      : [errorData.message || 'An unexpected error occurred'];
+    if (response.status === 204) {
+      return {} as T;
+    }
 
-    throw new ApiErrorResponse(
-      response.status,
-      errorData.error || 'API Error',
-      messages,
-    );
+    return response.json();
+  } catch (err: any) {
+    if (err.name === 'AbortError') {
+      throw new ApiErrorResponse(504, 'Gateway Timeout', [
+        'The server is warming up from sleep. Please try again in a few seconds.',
+      ]);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  if (response.status === 204) {
-    return {} as T;
-  }
-
-  return response.json();
 }
